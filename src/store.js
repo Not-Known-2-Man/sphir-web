@@ -41,13 +41,13 @@ export const store = reactive({
   },
 
   loginGuest() {
-    this.token     = 'guest_session'
+    this.token     = 'guest_token'
     this.uid       = 'guest'
     this.client    = ''
     this.firstName = 'Guest'
     this.lastName  = ''
     this.isGuest   = true
-    LS.set('sphir_token', 'guest_session')
+    LS.set('sphir_token', 'guest_token')
     LS.set('sphir_uid',   'guest')
     LS.set('sphir_guest', '1')
   },
