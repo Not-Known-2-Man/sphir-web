@@ -1,29 +1,37 @@
 <template>
+  <div class="sphirs-page" @click="openFilter = null">
   <div class="page-body">
     <!-- Page hero -->
     <div class="page-hero">
-      <h1 class="gradient-title">Sphirs</h1>
-      <div class="search-row">
-        <div class="search-pill-wrap">
-          <input v-model="search" class="search-pill" type="text"
-            placeholder="Search collections and cards…" />
-          <button v-if="search" class="search-clear" @click="search = ''" aria-label="Clear">×</button>
+      <h1 class="page-title">Sphirs</h1>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-wrap">
+            <input v-model="search" class="search-input" type="text" placeholder="Search Sphirs" />
+            <button v-if="search" class="search-clear" @click="search = ''" aria-label="Clear">×</button>
+            <img v-else class="search-icon" src="/assets/search.svg" alt="" width="20" height="20" />
+          </div>
+          <div class="toolbar-filters">
+            <div v-for="f in FILTERS" :key="f.key" class="toolbar-dropdown">
+              <button class="toolbar-dropdown-btn" @click.stop="openFilter = openFilter === f.key ? null : f.key">
+                {{ f.options.find(o => o.value === filters[f.key]).label }}
+                <img src="/assets/dropdown-arrow.svg" alt="" width="20" height="20" />
+              </button>
+              <div v-if="openFilter === f.key" class="toolbar-dropdown-menu" @click.stop>
+                <button v-for="o in f.options" :key="o.value"
+                  @click="filters[f.key] = o.value; openFilter = null">{{ o.label }}</button>
+              </div>
+            </div>
+          </div>
         </div>
-        <button class="btn-pill-lg" @click="openCollectionModal(null)">+ Create Sphir</button>
+        <div class="toolbar-right">
+          <button class="create-btn" @click="openCollectionModal(null)">
+            <img src="/assets/plus.svg" alt="" width="20" height="20" />
+            Create a Sphir
+          </button>
+          <a href="#" class="what-link" @click.prevent>What is a Sphir?</a>
+        </div>
       </div>
-      <a href="#" class="what-link" @click.prevent>What is a Sphir?</a>
-    </div>
-
-    <!-- Tabs (hidden during search) -->
-    <div v-if="!search" class="tabs-row">
-      <button class="tab" :class="{ active: tab === 'collections' }" @click="tab = 'collections'">
-        Collections
-        <span class="tab-count">{{ activeList.length }}</span>
-      </button>
-      <button class="tab" :class="{ active: tab === 'groups' }" @click="tab = 'groups'">
-        Groups
-        <span class="tab-count">{{ groupList.length }}</span>
-      </button>
     </div>
 
     <!-- Loading / error -->
@@ -166,17 +174,9 @@
           </div>
         </div>
 
-        <!-- Empty state: no collections -->
-        <div v-else class="empty-collections">
-          <div class="empty-icon">📁</div>
-          <div class="empty-title">No collections yet</div>
-          <div class="empty-subtitle">Create your first collection to get started</div>
-          <button class="btn-empty" @click="openCollectionModal(null)">+ Create Collection</button>
-        </div>
-
         <!-- Uncategorized cards section -->
         <div
-          v-if="tab === 'collections' && !loadingUncat && uncategorizedCards.length > 0"
+          v-if="filters.owner !== 'joined' && !loadingUncat && uncategorizedCards.length > 0"
           class="uncat-section"
         >
           <div class="uncat-heading">Uncategorized</div>
@@ -230,10 +230,11 @@
       @cancel="confirmTarget = null"
     />
   </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { fetchCollections, deleteCollection, fetchAllCards, deleteCard } from '../api.js'
 import { store } from '../store.js'
 import { useToast } from '../composables/useToast.js'
@@ -244,7 +245,16 @@ import CardDetailModal  from '../components/CardDetailModal.vue'
 
 const { success, error: toastError } = useToast()
 
-const tab             = ref('collections')
+const FILTERS = [
+  { key: 'privacy', options: [
+    { value: 'all', label: 'All Sphirs' }, { value: 'public', label: 'Public' }, { value: 'private', label: 'Private' }
+  ] },
+  { key: 'owner', options: [
+    { value: 'all', label: 'All' }, { value: 'mine', label: 'Created by Me' }, { value: 'joined', label: 'Joined by Me' }
+  ] }
+]
+const filters         = reactive({ privacy: 'all', owner: 'all' })
+const openFilter      = ref(null)
 const search          = ref('')
 const collections     = ref([])
 const loadingCollections = ref(true)
@@ -261,8 +271,13 @@ const allCards             = ref([])
 const loadingUncat         = ref(false)
 const detailCard           = ref(null)
 
-const myCollections = computed(() => collections.value.filter(c => c.privacy !== 'public'))
-const myGroups      = computed(() => collections.value.filter(c => c.privacy === 'public'))
+// The local API only returns Sphirs the user created, so "Joined by Me" is always empty.
+const filteredCollections = computed(() => {
+  if (filters.owner === 'joined') return []
+  if (filters.privacy === 'public')  return collections.value.filter(c => c.privacy === 'public')
+  if (filters.privacy === 'private') return collections.value.filter(c => c.privacy !== 'public')
+  return collections.value
+})
 
 function filterBySearch(list) {
   if (!search.value) return list
@@ -270,9 +285,8 @@ function filterBySearch(list) {
   return list.filter(c => c.name?.toLowerCase().includes(q) || c.description?.toLowerCase().includes(q))
 }
 
-const activeList  = computed(() => filterBySearch(myCollections.value))
-const groupList   = computed(() => filterBySearch(myGroups.value))
-const displayList = computed(() => tab.value === 'collections' ? activeList.value : groupList.value)
+const activeList  = computed(() => filterBySearch(filteredCollections.value))
+const displayList = activeList
 
 const uncategorizedCards = computed(() =>
   allCards.value.filter(c => c.folder_id === null || c.folder_id === undefined)
@@ -352,7 +366,7 @@ function closeMenu() { openMenuId.value = null }
 
 onMounted(() => document.addEventListener('keydown', onEsc))
 onUnmounted(() => document.removeEventListener('keydown', onEsc))
-function onEsc(e) { if (e.key === 'Escape') openMenuId.value = null }
+function onEsc(e) { if (e.key === 'Escape') { openMenuId.value = null; openFilter.value = null } }
 
 function openCollectionModal(col) { editingCollection.value = col; collectionModalOpen.value = true }
 
@@ -398,32 +412,86 @@ async function doDelete() {
 </script>
 
 <style scoped>
+/* Page background */
+.sphirs-page {
+  min-height: calc(100vh - var(--header-h));
+  background: linear-gradient(180deg, #FFFFFF 0%, #F3F1ED 100%);
+}
+.sphirs-page .page-body { max-width: none; padding: 4px 60px 80px; }
+
 /* Hero */
 .page-hero { margin-bottom: 40px; }
 
-.gradient-title {
-  font-family: 'Poppins', sans-serif;
-  font-size: clamp(42px, 6vw, 60px); font-weight: 600;
-  letter-spacing: -2.4px; line-height: 1.05;
-  background: linear-gradient(135deg, #8A7A5E 20%, #C4A882 100%);
+.page-title {
+  font-family: 'Gilroy', 'Poppins', sans-serif;
+  font-size: 60px; font-weight: 600;
+  letter-spacing: -2.4px; line-height: 64px;
+  text-align: center; margin: 15px 0;
+  background: url('/assets/title-background.png') center / cover;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text; display: inline-block; margin-bottom: 24px;
+  background-clip: text;
 }
 
-.search-row {
-  display: flex; gap: 12px; align-items: center;
-  margin-bottom: 14px; flex-wrap: wrap;
+.toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-top: 25px;
 }
-.search-pill-wrap { position: relative; flex: 1; min-width: 220px; }
-.search-pill {
-  width: 100%; border-radius: 200px;
-  background: rgba(255,255,255,0.9); border: 1px solid var(--border);
-  padding: 11px 44px 11px 22px;
-  font-size: 14px; color: var(--text);
-  transition: border-color .15s, box-shadow .15s;
+.toolbar-left { display: flex; align-items: center; gap: 12px; }
+.toolbar-filters { display: flex; gap: 4px; }
+.toolbar-right { display: flex; align-items: center; gap: 12px; }
+
+.search-wrap { position: relative; width: 300px; }
+.search-input {
+  width: 100%; height: 36px; border: none; border-radius: 200px;
+  background: rgba(255,255,255,0.9);
+  box-shadow: rgba(0,0,0,0.05) 30px 30px 100px 0px;
+  padding: 10px 48px 10px 20px;
+  font-size: 14px; color: #000;
 }
-.search-pill::placeholder { color: var(--text-light); }
-.search-pill:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(138,122,94,.1); outline: none; }
+.search-input::placeholder { color: #9CA3AF; }
+.search-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+
+.toolbar-dropdown { position: relative; }
+.toolbar-dropdown-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 38px; padding: 0 16px;
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 200px;
+  font-size: 14px; font-weight: 500; color: #374151; white-space: nowrap;
+}
+.toolbar-dropdown-menu {
+  position: absolute; top: calc(100% + 2px); right: 0;
+  min-width: 180px; padding: 8px 0;
+  background: #fff; border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  z-index: 50;
+}
+.toolbar-dropdown-menu button {
+  display: block; width: 100%; text-align: left;
+  padding: 8px 20px; background: none;
+  font-size: 14px; color: #374151;
+}
+.toolbar-dropdown-menu button:hover { background: #F9FAFB; }
+
+.create-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 44px; padding: 10px 18px;
+  background: var(--accent); color: #fff; border-radius: 200px;
+  box-shadow: rgba(16,24,40,0.05) 0px 1px 2px 0px;
+  font-size: 16px; font-weight: 600; white-space: nowrap;
+  transition: background .15s;
+}
+.create-btn:hover { background: var(--accent-dk); }
+
+.what-link { font-size: 18px; color: var(--accent); white-space: nowrap; }
+.what-link:hover { text-decoration: underline; }
+
+@media (max-width: 900px) {
+  .sphirs-page .page-body { padding: 25px 20px 60px; }
+  .toolbar { flex-direction: column; gap: 12px; margin-top: 30px; }
+  .toolbar-left { flex-direction: column; width: 100%; }
+  .search-wrap { width: 100%; max-width: 300px; }
+}
+
 .search-clear {
   position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
   width: 22px; height: 22px; border-radius: 50%;
@@ -432,38 +500,6 @@ async function doDelete() {
   transition: background .12s;
 }
 .search-clear:hover { background: var(--border-dk); color: var(--text); }
-
-.btn-pill-lg {
-  background: var(--accent); color: #fff;
-  border-radius: 20px; padding: 11px 28px;
-  font-size: 14px; font-weight: 500; white-space: nowrap;
-  transition: background .15s;
-}
-.btn-pill-lg:hover { background: var(--accent-dk); }
-
-.what-link { font-size: 13px; color: var(--accent); }
-.what-link:hover { text-decoration: underline; }
-
-/* Tabs */
-.tabs-row {
-  display: flex; border-bottom: 1.5px solid var(--border);
-  margin-bottom: 36px;
-}
-.tab {
-  display: flex; align-items: center; gap: 8px;
-  padding: 11px 20px; font-size: 14px; font-weight: 500;
-  color: var(--text-muted); background: none;
-  border-bottom: 2px solid transparent; margin-bottom: -1.5px;
-  transition: color .15s, border-color .15s;
-}
-.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
-.tab:not(.active):hover { color: var(--text); }
-.tab-count {
-  font-size: 11px; font-weight: 600;
-  background: var(--surface); color: var(--text-muted);
-  padding: 1px 7px; border-radius: 20px;
-}
-.tab.active .tab-count { background: var(--accent); color: #fff; }
 
 /* Search results */
 .search-section { margin-bottom: 44px; }
@@ -559,21 +595,6 @@ async function doDelete() {
 }
 .card-menu button:hover { background: var(--surface); }
 .card-menu button.menu-danger:hover { background: var(--danger-bg); color: var(--danger); }
-
-/* Empty state: no collections */
-.empty-collections { text-align: center; padding: 80px 24px; }
-.empty-icon { font-size: 52px; margin-bottom: 16px; line-height: 1; }
-.empty-title {
-  font-family: 'Poppins', sans-serif;
-  font-size: 20px; font-weight: 600; color: var(--title); margin-bottom: 8px;
-}
-.empty-subtitle { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
-.btn-empty {
-  background: #8A7A5E; color: #fff;
-  border-radius: 20px; padding: 11px 28px;
-  font-size: 14px; font-weight: 500; transition: background .15s;
-}
-.btn-empty:hover { background: #6F5E4E; }
 
 /* Uncategorized cards section */
 .uncat-section { margin-top: 44px; }

@@ -3,73 +3,100 @@
     <Toast />
     <!-- Fixed global header -->
     <header v-if="store.isLoggedIn" class="site-header">
-      <div class="header-inner">
-        <!-- Logo -->
-        <router-link to="/" class="logo">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path d="M10 1.5C5.36 1.5 1.5 5.36 1.5 10S5.36 18.5 10 18.5 18.5 14.64 18.5 10C18.5 7.62 17.55 5.47 16 3.92" stroke="#8A7A5E" stroke-width="1.6" stroke-linecap="round"/>
-            <path d="M10 4.5C7.01 4.5 4.5 7.01 4.5 10S7.01 15.5 10 15.5" stroke="#8A7A5E" stroke-width="1.4" stroke-linecap="round"/>
-            <path d="M10 7.5C8.62 7.5 7.5 8.62 7.5 10S8.62 12.5 10 12.5C11.38 12.5 12.5 11.38 12.5 10" stroke="#8A7A5E" stroke-width="1.2" stroke-linecap="round"/>
-          </svg>
-          <span class="logo-text">SPHIR</span>
-        </router-link>
+      <router-link to="/" class="logo" aria-label="Sphir home">
+        <img src="/assets/sphir-logo.svg" alt="Sphir" width="110" height="25" />
+      </router-link>
 
-        <!-- Right-side actions -->
-        <div class="header-right">
-          <button class="header-pill" @click="handleCreateCard">+ Card</button>
-          <router-link to="/" class="header-pill">Sphirs</router-link>
-
-          <!-- Notification icon -->
+      <!-- Desktop navigation -->
+      <nav class="header-right">
+        <router-link to="/" class="header-search">Search</router-link>
+        <div class="header-actions">
+          <button class="header-card-btn" @click="handleCreateCard">+ Card</button>
           <button class="header-icon-btn" title="Notifications" aria-label="Notifications">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
+            <img src="/assets/notification.png" alt="" width="25" height="25" />
           </button>
-
-          <!-- Connections icon -->
           <button class="header-icon-btn" title="Connections" aria-label="Connections">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
+            <img src="/assets/connections.png" alt="" width="25" height="25" />
           </button>
-
-          <!-- Lightning icon -->
-          <button class="header-icon-btn" title="Activity" aria-label="Activity">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          <router-link to="/settings" class="header-avatar" :title="store.displayName" aria-label="Account">
+            <svg viewBox="0 0 40 40" aria-hidden="true">
+              <circle cx="20" cy="20" r="20" fill="#B8B8B8"/>
+              <circle cx="20" cy="15.5" r="6.5" fill="#6E6E6E"/>
+              <path d="M7 34c2.5-6 7.4-9 13-9s10.5 3 13 9a19.9 19.9 0 0 1-26 0z" fill="#6E6E6E"/>
             </svg>
-          </button>
-
-          <!-- Avatar -->
-          <router-link to="/settings" class="header-avatar" :title="store.displayName">
-            {{ avatarLetter }}
           </router-link>
         </div>
-      </div>
+      </nav>
+
+      <!-- Mobile menu toggle -->
+      <button class="header-burger" aria-label="Open menu" @click="menuOpen = true">
+        <span></span><span></span><span></span>
+      </button>
     </header>
+
+    <!-- Mobile side menu -->
+    <div v-if="store.isLoggedIn && menuOpen" class="side-menu-overlay" @click="menuOpen = false">
+      <aside class="side-menu" @click.stop>
+        <div class="side-menu-user">
+          <div class="side-menu-name">{{ store.displayName }}</div>
+          <div class="side-menu-email">{{ store.uid }}</div>
+        </div>
+        <router-link to="/" class="side-menu-search" @click="menuOpen = false">Search</router-link>
+        <div class="side-menu-row">
+          <button class="side-menu-card" @click="menuOpen = false; handleCreateCard()">+ Card</button>
+          <img src="/assets/connections.png" alt="Connections" width="25" height="25" />
+        </div>
+        <button class="side-menu-item" @click="menuOpen = false">
+          <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          My Archive
+        </button>
+        <router-link to="/settings" class="side-menu-item" @click="menuOpen = false">
+          <svg viewBox="0 0 24 24"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="9" cy="8" r="2.2"/><circle cx="15" cy="16" r="2.2"/></svg>
+          Account Settings
+        </router-link>
+        <button class="side-menu-item" @click="menuOpen = false">
+          <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M10 9a2 2 0 1 1 2.5 1.9c-.4.2-.5.5-.5.9"/><circle cx="12" cy="13.6" r=".4"/></svg>
+          Help &amp; User Information
+        </button>
+        <button class="side-menu-item" @click="menuOpen = false">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="3" x2="12" y2="21"/><path d="M6 9h12M8 21h8"/><circle cx="12" cy="9" r="1"/></svg>
+          Legal
+        </button>
+        <div class="side-menu-logout-wrap">
+          <button class="side-menu-logout" @click="handleLogout">Log Out</button>
+        </div>
+      </aside>
+    </div>
 
     <router-view />
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref } from 'vue'
 import Toast from './components/Toast.vue'
 import { useRouter, useRoute } from 'vue-router'
+import { signOut } from './api.js'
 import { store } from './store.js'
 
 const router = useRouter()
 const route  = useRoute()
 
-const avatarLetter = computed(() => (store.displayName || 'U').charAt(0).toUpperCase())
+const menuOpen = ref(false)
 
 function handleCreateCard() {
   store.pendingCreateCard = true
   if (route.path !== '/') router.push('/')
+}
+
+async function handleLogout() {
+  menuOpen.value = false
+  try {
+    if (!store.isGuest) await signOut().catch(() => {})
+  } finally {
+    store.logout()
+    router.push('/login')
+  }
 }
 </script>
 
@@ -131,71 +158,127 @@ input, select, textarea { font-family: inherit; outline: none; }
   top: 0; left: 0; right: 0;
   height: var(--header-h);
   background: #FFFFFF;
-  border-bottom: 1px solid var(--border);
-  z-index: 100;
-}
-.header-inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 28px;
-  height: 100%;
+  border-bottom: 1px solid #E6E7E8;
+  padding-left: 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  z-index: 100;
 }
 
 /* Logo */
-.logo {
-  display: flex; align-items: center; gap: 8px;
-  text-decoration: none;
-}
-.logo-text {
-  font-family: 'Poppins', sans-serif;
-  font-size: 15px; font-weight: 700;
-  letter-spacing: 1.5px;
-  color: var(--title);
-}
+.logo { display: flex; align-items: center; }
+.logo img { display: block; }
 
-/* Header right */
-.header-right { display: flex; align-items: center; gap: 10px; }
-
-.header-pill {
-  background: var(--accent);
-  color: #fff;
-  border-radius: 20px;
-  padding: 6px 28px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px; font-weight: 500;
-  white-space: nowrap;
-  text-decoration: none;
+/* Header right (desktop) */
+.header-right {
+  width: 786px; max-width: calc(100% - 170px);
+  height: 50px; padding-right: 40px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.header-search {
+  padding: 0 12px; height: 40px;
   display: inline-flex; align-items: center;
+  font-size: 15px; color: #000;
+}
+.header-actions { display: flex; align-items: center; gap: 40px; }
+
+.header-card-btn {
+  width: 127px; height: 40px; margin-right: 10px;
+  background: var(--accent); color: #fff;
+  border-radius: 20px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px; font-weight: 700;
   transition: background .15s;
 }
-.header-pill:hover { background: var(--accent-dk); }
+.header-card-btn:hover { background: var(--accent-dk); }
 
 .header-icon-btn {
-  width: 36px; height: 36px;
-  border-radius: 50%;
+  width: 25px; height: 25px;
   display: flex; align-items: center; justify-content: center;
   background: transparent;
-  color: var(--text-muted);
-  transition: background .15s, color .15s;
+  transition: opacity .15s;
 }
-.header-icon-btn:hover { background: var(--surface); color: var(--text); }
+.header-icon-btn:hover { opacity: .7; }
+.header-icon-btn img { display: block; }
 
 .header-avatar {
-  width: 36px; height: 36px;
+  width: 40px; height: 40px;
   border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  text-decoration: none;
-  transition: background .15s;
+  border: 1px solid #E6E7E8;
+  overflow: hidden;
   flex-shrink: 0;
 }
-.header-avatar:hover { background: var(--accent-dk); }
+.header-avatar svg { display: block; width: 100%; height: 100%; }
+
+/* Mobile menu toggle */
+.header-burger {
+  display: none;
+  width: 60px; height: 60px;
+  background: transparent;
+  flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+}
+.header-burger span { display: block; width: 24px; height: 2px; background: #000; border-radius: 1px; }
+
+@media (max-width: 900px) {
+  .header-right { display: none; }
+  .header-burger { display: flex; }
+}
+
+/* Mobile side menu */
+.side-menu-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 300;
+  animation: overlay-in .15s ease;
+}
+.side-menu {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  width: 300px; max-width: 80vw;
+  background: #fff;
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.side-menu-user { padding: 26px 20px 12px; }
+.side-menu-name { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 700; color: #000; }
+.side-menu-email {
+  font-size: 13px; color: #000;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.side-menu-search {
+  display: block; text-align: center;
+  padding: 12px 0 18px; border-bottom: 1px solid #E6E7E8;
+  font-size: 15px; font-weight: 600; color: var(--accent);
+}
+.side-menu-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0 12px 20px; border-bottom: 1px solid #E6E7E8;
+}
+.side-menu-card {
+  background: var(--accent); color: #fff;
+  border-radius: 20px; padding: 10px 10px;
+  font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 700;
+}
+.side-menu-item {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 18px 20px;
+  background: transparent; text-align: left;
+  border-bottom: 1px solid #E6E7E8;
+  font-size: 20px; color: #333;
+}
+.side-menu-item svg {
+  width: 20px; height: 20px; flex-shrink: 0;
+  fill: none; stroke: var(--accent); stroke-width: 1.5;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.side-menu-logout-wrap { padding: 14px 0 14px 20px; border-bottom: 1px solid #E6E7E8; }
+.side-menu-logout {
+  width: 100%; height: 32px;
+  border: 1px solid var(--accent); border-radius: 20px;
+  background: #fff;
+  font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 700;
+  color: var(--accent-dk);
+}
 
 /* ── Page layout ──────────────────────────────────────────────────────── */
 .page { min-height: 100vh; }
