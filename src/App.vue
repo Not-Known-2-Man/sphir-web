@@ -142,9 +142,13 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 h1, h2, h3, .display { font-family: 'Poppins', sans-serif; }
 a { color: inherit; text-decoration: none; }
+/* User-written text: a long unbroken word must wrap, never widen the page on phones. */
+.col-title, .sphir-desc, .biz-title, .biz-desc, .uncat-title, .uncat-desc,
+.detail-title, .detail-desc { overflow-wrap: anywhere; }
 button { font-family: inherit; cursor: pointer; border: none; outline: none; }
 input, select, textarea { font-family: inherit; outline: none; }
 

@@ -433,7 +433,7 @@ async function doDeleteCard(id) {
   margin-top: 30px;
 }
 @media (max-width: 900px)  { .biz-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 576px)  { .biz-grid { grid-template-columns: 1fr; } }
+@media (max-width: 576px)  { .biz-grid { grid-template-columns: minmax(0, 1fr); } }
 
 .biz-col { display: flex; justify-content: center; }
 
