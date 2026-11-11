@@ -252,7 +252,7 @@ input, select, textarea { font-family: inherit; outline: none; }
 }
 .side-menu-row {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 0 12px 20px; border-bottom: 1px solid #E6E7E8;
+  padding: 12px 20px; border-bottom: 1px solid #E6E7E8;
 }
 .side-menu-card {
   background: var(--accent); color: #fff;
@@ -271,7 +271,7 @@ input, select, textarea { font-family: inherit; outline: none; }
   fill: none; stroke: var(--accent); stroke-width: 1.5;
   stroke-linecap: round; stroke-linejoin: round;
 }
-.side-menu-logout-wrap { padding: 14px 0 14px 20px; border-bottom: 1px solid #E6E7E8; }
+.side-menu-logout-wrap { padding: 14px 20px; border-bottom: 1px solid #E6E7E8; }
 .side-menu-logout {
   width: 100%; height: 32px;
   border: 1px solid var(--accent); border-radius: 20px;
