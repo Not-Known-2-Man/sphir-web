@@ -252,7 +252,7 @@ async function save() {
       website:     form.website.trim(),
       email:       '',
       tags:        [...typeTags, ...userTags],
-      og_image:    form.image || undefined,
+      og_image:    form.image || '',
       folder_id:   form.folderId || undefined,
     }
     let result
