@@ -83,10 +83,10 @@ export const createCard = (body)      => req('/businesses',      { method: 'POST
 export const updateCard = (id, body)  => req(`/businesses/${id}`, { method: 'PUT',   body })
 export const deleteCard = (id)        => req(`/businesses/${id}`, { method: 'DELETE' })
 
-// Preview: GET /api/v1/businesses/preview?url=... → { title, description, image }
+// Preview: GET /api/v1/preview?url=... → { title, description, image }
 export async function previewUrl(url) {
   try {
-    return await req('/businesses/preview', { query: { url } })
+    return await req('/preview', { query: { url } })
   } catch {
     return null
   }

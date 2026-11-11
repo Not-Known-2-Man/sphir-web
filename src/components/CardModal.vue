@@ -102,7 +102,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { createCard, updateCard, fetchCollections } from '../api.js'
+import { createCard, updateCard, fetchCollections, previewUrl } from '../api.js'
 import { useToast } from '../composables/useToast.js'
 
 const CARD_TYPES = [
@@ -221,9 +221,8 @@ async function fetchMeta() {
   if (!form.website?.trim()) return
   fetching.value = true; fetchError.value = ''
   try {
-    const res  = await fetch(`/api/v1/preview?url=${encodeURIComponent(form.website.trim())}`)
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error || 'Could not fetch metadata')
+    const data = await previewUrl(form.website.trim())
+    if (!data) throw new Error('Could not fetch metadata')
     if (data.title       && !form.title)       form.title       = data.title
     if (data.description && !form.description) form.description = data.description
     if (data.image)                            form.image       = data.image
