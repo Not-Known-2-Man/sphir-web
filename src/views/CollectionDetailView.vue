@@ -110,6 +110,9 @@
               <!-- ③ Title: Montserrat Bold 20px #000000 -->
               <div class="biz-title">{{ card.title }}</div>
 
+              <!-- Price (optional) -->
+              <div v-if="cardPrice(card)" class="biz-price">{{ cardPrice(card) }}</div>
+
               <!-- ④ Description (optional) -->
               <div v-if="card.description" class="biz-desc">{{ card.description }}</div>
 
@@ -184,6 +187,7 @@
       :card="detailCard"
       :collections="allCollections"
       @close="detailCard = null"
+      @updated="onDetailUpdated"
       @edit="onDetailEdit"
       @delete="onDetailDelete"
     />
@@ -222,13 +226,12 @@ import CollectionModal  from '../components/CollectionModal.vue'
 import CardModal        from '../components/CardModal.vue'
 import ConfirmDialog    from '../components/ConfirmDialog.vue'
 import CardDetailModal  from '../components/CardDetailModal.vue'
+import { TYPE_EMOJI, TYPE_LABEL, parseTags, visibleTags, cardPrice, cardInFolder } from '../cardTypes.js'
 
 const route  = useRoute()
 const router = useRouter()
 const { success, error: toastError } = useToast()
 
-const TYPE_EMOJI = { url: '🔗', note: '📝', photo: '📷', screenshot: '🖼️', contact: '👤' }
-const TYPE_LABEL = { url: 'LINK', note: 'NOTE', photo: 'PHOTO', screenshot: 'SCREENSHOT', contact: 'CONTACT' }
 
 const collection      = ref(null)
 const allCollections  = ref([])
@@ -258,15 +261,6 @@ const filteredCards = computed(() => {
   )
 })
 
-function parseTags(tags) {
-  if (Array.isArray(tags)) return tags.filter(Boolean)
-  if (typeof tags === 'string') {
-    try { const p = JSON.parse(tags); if (Array.isArray(p)) return p.filter(Boolean) } catch {}
-    return tags.split(',').map(t => t.trim()).filter(Boolean)
-  }
-  return []
-}
-function visibleTags(card) { return parseTags(card.tags).filter(t => !t.startsWith('_')) }
 function cardTypeEmoji(card) {
   const tags = parseTags(card.tags)
   for (const [k, v] of Object.entries(TYPE_EMOJI)) { if (tags.includes(`_${k}`)) return v }
@@ -308,7 +302,7 @@ async function loadCards() {
   loadingCards.value = true; cardsError.value = ''
   try {
     const all = await fetchAllCards()
-    cards.value = all.filter(b => String(b.folder_id) === String(route.params.id))
+    cards.value = all.filter(b => cardInFolder(b, route.params.id))
   } catch (e) { cardsError.value = e.message }
   finally { loadingCards.value = false }
 }
@@ -325,13 +319,22 @@ async function doDeleteCollection() {
 
 function openDetail(card) { detailCard.value = card }
 function openCardModal(card) { editingCard.value = card; cardModalOpen.value = true }
+function onDetailUpdated(card) {
+  detailCard.value = card
+  if (!cardInFolder(card, route.params.id)) {
+    cards.value = cards.value.filter(c => String(c.id) !== String(card.id))
+    return
+  }
+  const idx = cards.value.findIndex(c => String(c.id) === String(card.id))
+  if (idx !== -1) cards.value[idx] = card
+}
 function onDetailEdit(card) { detailCard.value = null; openCardModal(card) }
 async function onDetailDelete(id) { await doDeleteCard(id); detailCard.value = null }
 function onCardSaved(result) {
   if (editingCard.value) {
     const idx = cards.value.findIndex(c => String(c.id) === String(editingCard.value.id))
     if (idx !== -1) cards.value[idx] = result
-    if (String(result.folder_id) !== String(route.params.id)) {
+    if (!cardInFolder(result, route.params.id)) {
       cards.value = cards.value.filter(c => String(c.id) !== String(result.id))
     }
     success('Changes saved')
@@ -482,6 +485,10 @@ async function doDeleteCard(id) {
 }
 
 /* ④ Description */
+.biz-price {
+  font-size: 16px; font-weight: 600; color: #8A7A5E;
+  margin: 6px 20px 0; flex-shrink: 0;
+}
 .biz-desc {
   font-size: 14px; color: #666666;
   margin: 8px 20px 0; line-height: 1.55;

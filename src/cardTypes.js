@@ -1,0 +1,37 @@
+// Shared card-type vocabulary and card helpers.
+// A card's type is stored as the hidden tag "_<type>" (underscore tags are never shown).
+
+export const TYPE_LABEL = {
+  article: 'ARTICLE', video: 'VIDEO', recipe: 'RECIPE', social: 'SOCIAL POST',
+  product: 'PRODUCT',
+  url: 'LINK', note: 'NOTE', photo: 'PHOTO', screenshot: 'SCREENSHOT', contact: 'CONTACT',
+}
+
+export const TYPE_EMOJI = {
+  article: '📰', video: '🎬', recipe: '🍳', social: '💬', product: '🛍️',
+  url: '🔗', note: '📝', photo: '📷', screenshot: '🖼️', contact: '👤',
+}
+
+export function parseTags(raw) {
+  if (Array.isArray(raw)) return raw.filter(Boolean)
+  if (typeof raw === 'string') {
+    try { const p = JSON.parse(raw); if (Array.isArray(p)) return p.filter(Boolean) } catch {}
+    return raw.split(',').map(t => t.trim()).filter(Boolean)
+  }
+  return []
+}
+
+export function visibleTags(card) { return parseTags(card.tags).filter(t => !t.startsWith('_')) }
+
+export function cardPrice(card) { return String(card?.price ?? '').trim() }
+
+// [primary, ...extras]; falls back to folder_id when the API has no folder_ids yet.
+export function cardFolderIds(card) {
+  if (Array.isArray(card?.folder_ids) && card.folder_ids.length) return card.folder_ids.map(String)
+  return card?.folder_id !== null && card?.folder_id !== undefined && card?.folder_id !== ''
+    ? [String(card.folder_id)] : []
+}
+
+export function cardInFolder(card, folderId) {
+  return cardFolderIds(card).includes(String(folderId))
+}

@@ -113,6 +113,7 @@
                 <div class="uncat-row-body">
                   <span class="uncat-category">{{ cardCategory(card) }}</span>
                   <span class="uncat-title">{{ card.title }}</span>
+                  <span v-if="cardPrice(card)" class="uncat-price">{{ cardPrice(card) }}</span>
                   <span v-if="card.description" class="uncat-desc">{{ card.description }}</span>
                 </div>
                 <span v-if="card.created_at" class="uncat-date">{{ formatDate(card.created_at) }}</span>
@@ -189,6 +190,7 @@
               <div class="uncat-row-body">
                 <span class="uncat-category">{{ cardCategory(card) }}</span>
                 <span class="uncat-title">{{ card.title }}</span>
+                  <span v-if="cardPrice(card)" class="uncat-price">{{ cardPrice(card) }}</span>
                 <span v-if="card.description" class="uncat-desc">{{ card.description }}</span>
               </div>
               <span v-if="card.created_at" class="uncat-date">{{ formatDate(card.created_at) }}</span>
@@ -204,6 +206,7 @@
       :card="detailCard"
       :collections="collections"
       @close="detailCard = null"
+      @updated="onDetailUpdated"
       @edit="onDetailEdit"
       @delete="onDetailDelete"
     />
@@ -242,6 +245,7 @@ import CollectionModal  from '../components/CollectionModal.vue'
 import CardModal        from '../components/CardModal.vue'
 import ConfirmDialog    from '../components/ConfirmDialog.vue'
 import CardDetailModal  from '../components/CardDetailModal.vue'
+import { TYPE_LABEL, parseTags, visibleTags, cardPrice } from '../cardTypes.js'
 
 const { success, error: toastError } = useToast()
 
@@ -328,17 +332,6 @@ async function loadAllCards() {
   finally { loadingUncat.value = false }
 }
 
-const TYPE_LABEL = { url: 'LINK', note: 'NOTE', photo: 'PHOTO', screenshot: 'SCREENSHOT', contact: 'CONTACT' }
-
-function parseTags(raw) {
-  if (Array.isArray(raw)) return raw.filter(Boolean)
-  if (typeof raw === 'string') {
-    try { const p = JSON.parse(raw); if (Array.isArray(p)) return p.filter(Boolean) } catch {}
-    return raw.split(',').map(t => t.trim()).filter(Boolean)
-  }
-  return []
-}
-function visibleTags(card) { return parseTags(card.tags).filter(t => !t.startsWith('_')) }
 function cardCategory(card) {
   const all = parseTags(card.tags)
   for (const [k, v] of Object.entries(TYPE_LABEL)) { if (all.includes(`_${k}`)) return v }
@@ -351,6 +344,11 @@ function formatDate(str) {
   return new Date(str).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+function onDetailUpdated(card) {
+  detailCard.value = card
+  const idx = allCards.value.findIndex(c => String(c.id) === String(card.id))
+  if (idx !== -1) allCards.value[idx] = { ...allCards.value[idx], ...card }
+}
 function onDetailEdit(card) { detailCard.value = null; openCardModal(card) }
 async function onDetailDelete(id) {
   try {
@@ -621,6 +619,7 @@ async function doDelete() {
   font-family: 'Montserrat', sans-serif; font-size: 15px; font-weight: 700; color: #000000;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+.uncat-price { font-size: 13px; font-weight: 600; color: #8A7A5E; }
 .uncat-desc {
   font-size: 13px; color: #666666;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;

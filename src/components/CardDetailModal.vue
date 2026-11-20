@@ -26,6 +26,9 @@
           <!-- Title -->
           <h2 class="detail-title">{{ card.title }}</h2>
 
+          <!-- Price -->
+          <div v-if="price" class="detail-price">{{ price }}</div>
+
           <!-- Description -->
           <p v-if="card.description" class="detail-desc">{{ card.description }}</p>
 
@@ -53,7 +56,7 @@
           <!-- Meta: collection + date -->
           <div class="detail-meta">
             <div v-if="collectionName" class="detail-meta-row">
-              <span class="detail-meta-label">Collection</span>
+              <span class="detail-meta-label">{{ folderIds.length > 1 ? 'Collections' : 'Collection' }}</span>
               <span class="detail-meta-value">{{ collectionName }}</span>
             </div>
             <div v-if="card.created_at" class="detail-meta-row">
@@ -63,6 +66,24 @@
           </div>
 
           <hr class="detail-divider" />
+
+          <!-- Add to collections -->
+          <div v-if="collections.length" class="detail-cols">
+            <button class="det-btn det-btn-edit" @click="toggleCols">
+              {{ colsOpen ? 'Close' : 'Add to collections' }}
+            </button>
+            <div v-if="colsOpen" class="cols-panel">
+              <label v-for="c in collections" :key="c.id" class="cols-row">
+                <input type="checkbox" :value="String(c.id)" v-model="selected" />
+                <span class="cols-name">{{ c.name }}</span>
+                <span v-if="String(c.id) === primaryId" class="cols-primary">Primary</span>
+              </label>
+              <div v-if="colsError" class="cols-error">{{ colsError }}</div>
+              <button class="det-btn det-btn-url cols-save" :disabled="!selected.length || savingCols || !colsChanged" @click="saveCols">
+                {{ savingCols ? 'Saving…' : 'Save collections' }}
+              </button>
+            </div>
+          </div>
 
           <!-- Delete confirm -->
           <div v-if="confirmingDelete" class="detail-confirm">
@@ -114,25 +135,49 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-
-const TYPE_LABEL = { url: 'LINK', note: 'NOTE', photo: 'PHOTO', screenshot: 'SCREENSHOT', contact: 'CONTACT' }
+import { setCardFolders } from '../api.js'
+import { TYPE_LABEL, parseTags, cardPrice, cardFolderIds } from '../cardTypes.js'
 
 const props = defineProps({
   card:        { type: Object, required: true },
   collections: { type: Array,  default: () => [] },
 })
 
-defineEmits(['close', 'edit', 'delete'])
+const emit = defineEmits(['close', 'edit', 'delete', 'updated'])
 
 const confirmingDelete = ref(false)
 
-function parseTags(raw) {
-  if (Array.isArray(raw)) return raw.filter(Boolean)
-  if (typeof raw === 'string') {
-    try { const p = JSON.parse(raw); if (Array.isArray(p)) return p.filter(Boolean) } catch {}
-    return raw.split(',').map(t => t.trim()).filter(Boolean)
-  }
-  return []
+const price = computed(() => cardPrice(props.card))
+const folderIds = computed(() => cardFolderIds(props.card))
+const primaryId = computed(() => folderIds.value[0] ?? '')
+
+const colsOpen   = ref(false)
+const selected   = ref([])
+const savingCols = ref(false)
+const colsError  = ref('')
+
+function toggleCols() {
+  colsOpen.value = !colsOpen.value
+  colsError.value = ''
+  if (colsOpen.value) selected.value = [...folderIds.value]
+}
+
+// Keep the current order (primary first) for ids that stay; append newly added ones.
+const nextIds = computed(() => [
+  ...folderIds.value.filter(id => selected.value.includes(id)),
+  ...selected.value.filter(id => !folderIds.value.includes(id)),
+])
+const colsChanged = computed(() => nextIds.value.join(',') !== folderIds.value.join(','))
+
+async function saveCols() {
+  savingCols.value = true; colsError.value = ''
+  try {
+    const updated = await setCardFolders(props.card.id, nextIds.value)
+    emit('updated', { ...props.card, ...(updated ?? { folder_id: nextIds.value[0], folder_ids: nextIds.value }) })
+    colsOpen.value = false
+  } catch (e) {
+    colsError.value = e.message || 'Could not update collections'
+  } finally { savingCols.value = false }
 }
 
 const tags = computed(() => parseTags(props.card.tags).filter(t => !t.startsWith('_')))
@@ -152,8 +197,10 @@ const img = computed(() =>
 )
 
 const collectionName = computed(() => {
-  if (!props.collections?.length || !props.card.folder_id) return ''
-  return props.collections.find(c => String(c.id) === String(props.card.folder_id))?.name || ''
+  if (!props.collections?.length) return ''
+  return folderIds.value
+    .map(id => props.collections.find(c => String(c.id) === id)?.name)
+    .filter(Boolean).join(', ')
 })
 
 function normalizeUrl(url) {
@@ -233,6 +280,23 @@ function formatDate(str) {
   line-height: 1.2; margin-bottom: 14px;
 }
 
+/* Price */
+.detail-price { font-size: 20px; font-weight: 600; color: #8A7A5E; margin: -6px 0 14px; }
+
+/* Add to collections */
+.detail-cols { margin-bottom: 20px; }
+.cols-panel {
+  margin-top: 12px; border: 1px solid #E8E3DC; border-radius: 14px;
+  padding: 10px 14px; display: flex; flex-direction: column; gap: 4px;
+  max-height: 240px; overflow-y: auto;
+}
+.cols-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 14px; color: #414651; cursor: pointer; min-height: 40px; }
+.cols-row input { width: 18px; height: 18px; flex-shrink: 0; accent-color: #8A7A5E; }
+.cols-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cols-primary { font-size: 11px; color: #8A7A5E; background: #F6F5F2; border-radius: 20px; padding: 2px 8px; }
+.cols-error { font-size: 13px; color: #C0392B; padding: 4px 0; }
+.cols-save { margin-left: 0; align-self: flex-start; margin-top: 6px; }
+
 /* Description */
 .detail-desc {
   font-size: 16px; line-height: 1.65; color: #666666;
@@ -307,4 +371,6 @@ function formatDate(str) {
   margin-left: auto;
 }
 .det-btn-url:hover { opacity: .88; }
+
+@media (max-width: 576px) { .detail-body { padding: 20px 18px 24px; } .detail-title { font-size: 22px; } }
 </style>

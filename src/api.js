@@ -83,7 +83,12 @@ export const createCard = (body)      => req('/businesses',      { method: 'POST
 export const updateCard = (id, body)  => req(`/businesses/${id}`, { method: 'PUT',   body })
 export const deleteCard = (id)        => req(`/businesses/${id}`, { method: 'DELETE' })
 
-// Preview: GET /api/v1/preview?url=... → { title, description, image }
+// Replace a card's collection membership (first id = primary folder_id). Returns the card.
+export const setCardFolders = (id, folderIds) =>
+  req(`/businesses/${id}/folders`, { method: 'PUT', body: { folder_ids: folderIds } })
+
+// Preview: GET /api/v1/preview?url=... → { url, title, description, image, type, tags, price, site, published }
+// (older API: only title/description/image — callers must tolerate missing fields)
 export async function previewUrl(url) {
   try {
     return await req('/preview', { query: { url } })

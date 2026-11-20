@@ -69,6 +69,11 @@
             </div>
 
             <div class="field">
+              <label>Price <span class="field-hint">(optional)</span></label>
+              <input v-model="form.price" type="text" placeholder="$29.99" />
+            </div>
+
+            <div class="field">
               <label>Tags <span class="field-hint">(comma-separated)</span></label>
               <input v-model="form.tagsRaw" type="text" placeholder="design, reading, work" />
             </div>
@@ -106,6 +111,34 @@ import { createCard, updateCard, fetchCollections, previewUrl } from '../api.js'
 import { useToast } from '../composables/useToast.js'
 
 const CARD_TYPES = [
+  {
+    key: 'article',
+    label: 'Article',
+    desc: 'News story, Blog Post, Essay, Report, etc.',
+    titlePlaceholder: 'Article title…',
+    descPlaceholder:  'Summary, notes, key points…',
+  },
+  {
+    key: 'video',
+    label: 'Video',
+    desc: 'YouTube, Vimeo, TikTok or any video.',
+    titlePlaceholder: 'Video title…',
+    descPlaceholder:  'Description, notes, timestamps…',
+  },
+  {
+    key: 'recipe',
+    label: 'Recipe',
+    desc: 'A dish, ingredients and steps.',
+    titlePlaceholder: 'Recipe name…',
+    descPlaceholder:  'Ingredients, notes, timing…',
+  },
+  {
+    key: 'social',
+    label: 'Social post',
+    desc: 'Instagram, X, Facebook or Threads post.',
+    titlePlaceholder: 'Post title or author…',
+    descPlaceholder:  'Caption, notes…',
+  },
   {
     key: 'text',
     label: 'Text',
@@ -169,6 +202,7 @@ const form = reactive({
   description: props.card?.description ?? '',
   website:     props.card?.website     ?? '',
   image:       props.card?.og_image    ?? props.card?.image ?? '',
+  price:       props.card?.price       ?? '',
   tagsRaw:     parseTags(props.card?.tags ?? []).filter(t => !t.startsWith('_')).join(', '),
   folderId:    String(props.card?.folder_id ?? props.defaultFolderId ?? ''),
 })
@@ -226,6 +260,20 @@ async function fetchMeta() {
     if (data.title       && !form.title)       form.title       = data.title
     if (data.description && !form.description) form.description = data.description
     if (data.image)                            form.image       = data.image
+    // Newer API fields (all optional; an older API just omits them)
+    if (!isEdit.value) {
+      if (data.type && data.type !== 'link' && CARD_TYPES.some(t => t.key === data.type)) {
+        selectedTypeKey.value = data.type
+      }
+      if (data.price && !form.price.trim()) form.price = data.price
+      const incoming = (Array.isArray(data.tags) ? data.tags : []).filter(t => t && !String(t).startsWith('_'))
+      if (incoming.length) {
+        const have = form.tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
+        const lower = new Set(have.map(t => t.toLowerCase()))
+        for (const t of incoming) if (!lower.has(String(t).toLowerCase())) { have.push(String(t)); lower.add(String(t).toLowerCase()) }
+        form.tagsRaw = have.join(', ')
+      }
+    }
   } catch {
     fetchError.value = 'Could not fetch metadata.'
     toastError('Could not fetch URL metadata')
@@ -253,12 +301,15 @@ async function save() {
       email:       '',
       tags:        [...typeTags, ...userTags],
       og_image:    form.image || '',
+      price:       form.price.trim(),
       folder_id:   form.folderId || undefined,
     }
     let result
     if (isEdit.value) {
       await updateCard(props.card.id, payload)
       result = { ...props.card, ...payload, folder_id: form.folderId }
+      // Primary collection changed: drop the stale folder_ids (consumers fall back to folder_id)
+      if (String(props.card.folder_id ?? '') !== String(form.folderId ?? '')) delete result.folder_ids
     } else {
       result = await createCard(payload)
       if (!result) result = { id: Date.now(), ...payload }
