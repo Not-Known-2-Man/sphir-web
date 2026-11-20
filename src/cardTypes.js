@@ -3,12 +3,14 @@
 
 export const TYPE_LABEL = {
   article: 'ARTICLE', video: 'VIDEO', recipe: 'RECIPE', social: 'SOCIAL POST',
-  product: 'PRODUCT',
+  product: 'PRODUCT', business: 'BUSINESS', text: 'TEXT', media: 'MEDIA',
+  scribe: 'ORIGINAL SCRIBE', originalScribe: 'ORIGINAL SCRIBE', // iOS stores "_originalScribe"
   url: 'LINK', note: 'NOTE', photo: 'PHOTO', screenshot: 'SCREENSHOT', contact: 'CONTACT',
 }
 
 export const TYPE_EMOJI = {
   article: '📰', video: '🎬', recipe: '🍳', social: '💬', product: '🛍️',
+  business: '💼', text: '📄', media: '🎞️', scribe: '✍️', originalScribe: '✍️',
   url: '🔗', note: '📝', photo: '📷', screenshot: '🖼️', contact: '👤',
 }
 
