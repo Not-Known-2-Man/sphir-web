@@ -136,7 +136,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { setCardFolders } from '../api.js'
-import { TYPE_LABEL, parseTags, cardPrice, cardFolderIds } from '../cardTypes.js'
+import { typeLabel, parseTags, cardPrice, cardFolderIds } from '../cardTypes.js'
 
 const props = defineProps({
   card:        { type: Object, required: true },
@@ -183,10 +183,8 @@ async function saveCols() {
 const tags = computed(() => parseTags(props.card.tags).filter(t => !t.startsWith('_')))
 
 const category = computed(() => {
-  const all = parseTags(props.card.tags)
-  for (const [k, v] of Object.entries(TYPE_LABEL)) {
-    if (all.includes(`_${k}`)) return v
-  }
+  const label = typeLabel(props.card)
+  if (label) return label
   const first = tags.value[0]
   if (first) return first.toUpperCase()
   return props.card.website ? 'LINK' : 'NOTE'

@@ -226,7 +226,7 @@ import CollectionModal  from '../components/CollectionModal.vue'
 import CardModal        from '../components/CardModal.vue'
 import ConfirmDialog    from '../components/ConfirmDialog.vue'
 import CardDetailModal  from '../components/CardDetailModal.vue'
-import { TYPE_EMOJI, TYPE_LABEL, parseTags, visibleTags, cardPrice, cardInFolder } from '../cardTypes.js'
+import { TYPE_EMOJI, typeLabel, parseTags, visibleTags, cardPrice, cardInFolder } from '../cardTypes.js'
 
 const route  = useRoute()
 const router = useRouter()
@@ -267,8 +267,8 @@ function cardTypeEmoji(card) {
   return card.website ? '🔗' : '📝'
 }
 function cardCategory(card) {
-  const tags = parseTags(card.tags)
-  for (const [k, v] of Object.entries(TYPE_LABEL)) { if (tags.includes(`_${k}`)) return v }
+  const label = typeLabel(card)
+  if (label) return label
   const firstTag = visibleTags(card)[0]
   if (firstTag) return firstTag.toUpperCase()
   return card.website ? 'LINK' : 'NOTE'

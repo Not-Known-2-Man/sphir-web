@@ -245,7 +245,7 @@ import CollectionModal  from '../components/CollectionModal.vue'
 import CardModal        from '../components/CardModal.vue'
 import ConfirmDialog    from '../components/ConfirmDialog.vue'
 import CardDetailModal  from '../components/CardDetailModal.vue'
-import { TYPE_LABEL, parseTags, visibleTags, cardPrice } from '../cardTypes.js'
+import { typeLabel, parseTags, visibleTags, cardPrice } from '../cardTypes.js'
 
 const { success, error: toastError } = useToast()
 
@@ -333,8 +333,8 @@ async function loadAllCards() {
 }
 
 function cardCategory(card) {
-  const all = parseTags(card.tags)
-  for (const [k, v] of Object.entries(TYPE_LABEL)) { if (all.includes(`_${k}`)) return v }
+  const label = typeLabel(card)
+  if (label) return label
   const first = visibleTags(card)[0]
   if (first) return first.toUpperCase()
   return card.website ? 'LINK' : 'NOTE'

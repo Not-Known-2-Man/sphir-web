@@ -23,6 +23,24 @@ export function parseTags(raw) {
   return []
 }
 
+function isInstagramReel(website) {
+  try {
+    const u = new URL(website)
+    return /(^|\.)instagram\.com$/.test(u.hostname) && /^\/reels?\//.test(u.pathname)
+  } catch { return false }
+}
+
+// Label of the card's stored type, or '' when it has no type tag.
+// Social cards from an Instagram reel read "INSTAGRAM REEL" (Figma).
+export function typeLabel(card) {
+  const tags = parseTags(card?.tags)
+  for (const [k, v] of Object.entries(TYPE_LABEL)) {
+    if (!tags.includes(`_${k}`)) continue
+    return k === 'social' && isInstagramReel(card.website) ? 'INSTAGRAM REEL' : v
+  }
+  return ''
+}
+
 export function visibleTags(card) { return parseTags(card.tags).filter(t => !t.startsWith('_')) }
 
 export function cardPrice(card) { return String(card?.price ?? '').trim() }
