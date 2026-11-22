@@ -392,6 +392,10 @@ function onCardSaved(result) {
     if (idx !== -1) allCards.value[idx] = { ...allCards.value[idx], ...result }
     else allCards.value.unshift(result)
   }
+  // The card modal can create the first collection inline; show it without a reload.
+  if (result?.folder_id && !collections.value.some(c => String(c.id) === String(result.folder_id))) {
+    loadCollections()
+  }
   success(editingCard.value ? 'Changes saved' : 'Card saved')
   cardModalOpen.value = false
 }

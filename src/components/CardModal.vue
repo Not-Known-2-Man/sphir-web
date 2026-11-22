@@ -215,7 +215,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['saved', 'cancel'])
 
-const { success, error: toastError } = useToast()
+const { error: toastError } = useToast()
 
 const isEdit         = computed(() => !!props.card)
 const step           = ref(isEdit.value ? 2 : 1)
@@ -411,8 +411,8 @@ async function save() {
       result = await createCard(payload)
       if (!result) result = { id: Date.now(), ...payload }
     }
+    // The parent view shows the "Card saved" toast.
     emit('saved', result)
-    success(isEdit.value ? 'Changes saved' : 'Card saved')
   } catch (e) {
     error.value = e.message
     toastError('Failed to save')
