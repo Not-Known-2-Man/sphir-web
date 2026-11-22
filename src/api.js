@@ -87,6 +87,10 @@ export const deleteCard = (id)        => req(`/businesses/${id}`, { method: 'DEL
 export const setCardFolders = (id, folderIds) =>
   req(`/businesses/${id}/folders`, { method: 'PUT', body: { folder_ids: folderIds } })
 
+// Upload a (resized) image: POST /api/v1/images {data: dataUrl} → { id, url }
+export const uploadImage = (dataUrl) =>
+  req('/images', { method: 'POST', body: { data: dataUrl } })
+
 // Preview: GET /api/v1/preview?url=... → { url, title, description, image, type, tags, price, site, published }
 // (older API: only title/description/image — callers must tolerate missing fields)
 export async function previewUrl(url) {

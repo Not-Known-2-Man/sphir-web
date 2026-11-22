@@ -31,6 +31,20 @@
           </div>
           <div class="modal-body">
 
+            <!-- Image upload / paste -->
+            <div class="field">
+              <label>Image <span class="field-hint">(choose a file or paste with Cmd/Ctrl+V)</span></label>
+              <div class="image-upload-row">
+                <button class="btn btn-ghost" type="button" :disabled="uploading" @click="fileInput?.click()">
+                  <span v-if="uploading" class="spinner"></span>
+                  <span v-else>Choose image…</span>
+                </button>
+                <span v-if="uploading" class="field-hint">{{ uploadStage }}</span>
+                <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" hidden @change="onFilePicked" />
+              </div>
+              <span v-if="uploadError" class="field-hint-err">{{ uploadError }}</span>
+            </div>
+
             <!-- OG image preview -->
             <div v-if="form.image" class="preview-thumb-wrap">
               <img :src="form.image" class="preview-thumb" alt="Preview" />
@@ -105,7 +119,7 @@
             <div class="modal-actions">
               <button class="btn btn-ghost" @click="$emit('cancel')">Cancel</button>
               <button class="btn btn-primary"
-                :disabled="!form.title.trim() || !form.folderId || saving"
+                :disabled="!form.title.trim() || !form.folderId || saving || uploading"
                 @click="save">
                 <span v-if="saving" class="spinner"></span>
                 <span v-else>{{ isEdit ? 'Save Changes' : 'Add Card' }}</span>
@@ -120,8 +134,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { createCard, updateCard, fetchCollections, createCollection, previewUrl } from '../api.js'
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
+import { createCard, updateCard, fetchCollections, createCollection, previewUrl, uploadImage } from '../api.js'
+import { resizeToJpegDataUrl, IMAGE_TYPES } from '../utils/imageResize.js'
 import { useToast } from '../composables/useToast.js'
 
 const CARD_TYPES = [
@@ -250,6 +265,54 @@ const allCollections = computed(() => {
   if (props.collections.length > 0) return props.collections
   return localCollections.value
 })
+
+const fileInput   = ref(null)
+const uploading   = ref(false)
+const uploadStage = ref('')
+const uploadError = ref('')
+
+async function addImage(file) {
+  if (!file || uploading.value) return
+  uploadError.value = ''
+  if (!IMAGE_TYPES.includes(file.type)) {
+    uploadError.value = 'Only JPEG, PNG or WebP images are supported.'
+    return
+  }
+  // No type chosen yet (e.g. pasted on the type selector): default to Media
+  if (!selectedTypeKey.value) selectedTypeKey.value = 'media'
+  if (step.value === 1) step.value = 2
+  uploading.value = true
+  try {
+    uploadStage.value = 'Resizing…'
+    const dataUrl = await resizeToJpegDataUrl(file)
+    uploadStage.value = 'Uploading…'
+    const res = await uploadImage(dataUrl)
+    if (!res?.url) throw new Error('The server did not return an image URL')
+    form.image = res.url
+  } catch (e) {
+    uploadError.value = `Image upload failed: ${e?.message || 'unknown error'}. The card was not saved.`
+  } finally {
+    uploading.value = false
+    uploadStage.value = ''
+  }
+}
+
+function onFilePicked(e) {
+  const file = e.target.files?.[0]
+  e.target.value = ''
+  addImage(file)
+}
+
+function onDocPaste(e) {
+  const item = [...(e.clipboardData?.items ?? [])].find(i => i.kind === 'file' && i.type.startsWith('image/'))
+  const file = item?.getAsFile()
+  if (!file) return          // plain text paste: leave to the focused field
+  e.preventDefault()
+  addImage(file)
+}
+
+onMounted(() => document.addEventListener('paste', onDocPaste))
+onBeforeUnmount(() => document.removeEventListener('paste', onDocPaste))
 
 onMounted(async () => {
   if (props.collections.length === 0) {
@@ -427,6 +490,7 @@ async function save() {
 .url-input-wrap { position: relative; }
 .url-input-wrap input { padding-right: 40px; }
 .url-fetch-spinner { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); }
+.image-upload-row { display: flex; align-items: center; gap: 10px; }
 .new-collection { display: flex; flex-direction: column; gap: 6px; }
 .new-collection-row { display: flex; gap: 8px; }
 .new-collection-row input { flex: 1; min-width: 0; }
