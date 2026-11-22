@@ -80,7 +80,21 @@
 
             <div class="field">
               <label>Collection * <span v-if="loadingFolders" class="field-hint">Loading…</span></label>
-              <select v-model="form.folderId" :class="{ 'select-required': !form.folderId }">
+              <!-- A new account has no collections yet: let the user create one here. -->
+              <div v-if="!loadingFolders && allCollections.length === 0" class="new-collection">
+                <span class="field-hint">You have no collections yet. Name your first one:</span>
+                <div class="new-collection-row">
+                  <input v-model="newCollectionName" type="text" placeholder="e.g. Weekend Ideas"
+                    @keydown.enter.prevent="createFirstCollection" />
+                  <button class="btn btn-ghost" type="button"
+                    :disabled="!newCollectionName.trim() || creatingCollection"
+                    @click="createFirstCollection">
+                    <span v-if="creatingCollection" class="spinner"></span>
+                    <span v-else>Create</span>
+                  </button>
+                </div>
+              </div>
+              <select v-else v-model="form.folderId" :class="{ 'select-required': !form.folderId }">
                 <option value="" disabled>— Select a collection —</option>
                 <option v-for="c in allCollections" :key="c.id" :value="String(c.id)">{{ c.name }}</option>
               </select>
@@ -107,7 +121,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { createCard, updateCard, fetchCollections, previewUrl } from '../api.js'
+import { createCard, updateCard, fetchCollections, createCollection, previewUrl } from '../api.js'
 import { useToast } from '../composables/useToast.js'
 
 const CARD_TYPES = [
@@ -211,6 +225,26 @@ const saving           = ref(false)
 const error            = ref('')
 const loadingFolders   = ref(false)
 const localCollections = ref([])
+const newCollectionName  = ref('')
+const creatingCollection = ref(false)
+
+async function createFirstCollection() {
+  const name = newCollectionName.value.trim()
+  if (!name || creatingCollection.value) return
+  creatingCollection.value = true
+  error.value = ''
+  try {
+    const created = await createCollection({ name, description: '', privacy: 'private' })
+    if (!created?.id) throw new Error('The collection was not created')
+    localCollections.value = [created]
+    form.folderId = String(created.id)
+    newCollectionName.value = ''
+  } catch (e) {
+    error.value = e?.message || 'Could not create the collection'
+  } finally {
+    creatingCollection.value = false
+  }
+}
 
 const allCollections = computed(() => {
   if (props.collections.length > 0) return props.collections
@@ -393,6 +427,9 @@ async function save() {
 .url-input-wrap { position: relative; }
 .url-input-wrap input { padding-right: 40px; }
 .url-fetch-spinner { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); }
+.new-collection { display: flex; flex-direction: column; gap: 6px; }
+.new-collection-row { display: flex; gap: 8px; }
+.new-collection-row input { flex: 1; min-width: 0; }
 .field-hint-err { display: block; font-size: 12px; color: var(--danger); margin-top: 5px; }
 
 /* Image preview */
