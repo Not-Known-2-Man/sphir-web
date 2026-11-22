@@ -290,7 +290,7 @@ async function addImage(file) {
     if (!res?.url) throw new Error('The server did not return an image URL')
     form.image = res.url
   } catch (e) {
-    uploadError.value = `Image upload failed: ${e?.message || 'unknown error'}. The card was not saved.`
+    uploadError.value = `Image upload failed: ${e?.message || 'unknown error'}. The image was not added — try another image, or save the card without it.`
   } finally {
     uploading.value = false
     uploadStage.value = ''
