@@ -359,9 +359,9 @@ function pickType(key) {
 }
 
 async function fetchMeta() {
+  alreadyOnSphir.value = null; filledByAi.value = false
   if (!form.website?.trim()) return
   fetching.value = true; fetchError.value = ''
-  alreadyOnSphir.value = null; filledByAi.value = false
   try {
     const data = await previewUrl(form.website.trim())
     if (!data) throw new Error('Could not fetch metadata')
@@ -375,7 +375,7 @@ async function fetchMeta() {
       }
       if (data.price && !form.price.trim()) form.price = data.price
       // Already on Sphir: stored info only fills what the page left empty
-      const known = data.already_on_sphir && typeof data.already_on_sphir === 'object' ? data.already_on_sphir : null
+      const known = data.already_on_sphir && Number(data.already_on_sphir.count) > 0 ? data.already_on_sphir : null
       alreadyOnSphir.value = known
       if (known) {
         if (known.title && !form.title.trim())  form.title = known.title
