@@ -92,6 +92,7 @@ export const uploadImage = (dataUrl) =>
   req('/images', { method: 'POST', body: { data: dataUrl } })
 
 // Preview: GET /api/v1/preview?url=... → { url, title, description, image, type, tags, price, site, published }
+// Newer: already_on_sphir (null | {count,title,image,price}), ai (bool), suggested_collection_id (int|null)
 // (older API: only title/description/image — callers must tolerate missing fields)
 export async function previewUrl(url) {
   try {

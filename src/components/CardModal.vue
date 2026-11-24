@@ -31,6 +31,10 @@
           </div>
           <div class="modal-body">
 
+            <!-- Link already saved by other people (count only, never who) -->
+            <div v-if="alreadyOnSphir" class="sphir-notice">{{ alreadyOnSphirText }}</div>
+            <div v-if="filledByAi" class="ai-hint">Filled by AI · edit anything</div>
+
             <!-- Image upload / paste -->
             <div class="field">
               <label>Image <span class="field-hint">(choose a file or paste with Cmd/Ctrl+V)</span></label>
@@ -225,6 +229,12 @@ const currentType = computed(() => CARD_TYPES.find(t => t.key === selectedTypeKe
 
 const fetching   = ref(false)
 const fetchError = ref('')
+const alreadyOnSphir = ref(null)   // { count, title, image, price } from the preview, or null
+const filledByAi     = ref(false)
+const alreadyOnSphirText = computed(() => {
+  const n = Number(alreadyOnSphir.value?.count) || 0
+  return `Already on Sphir · ${n} ${n === 1 ? 'person' : 'people'} saved it`
+})
 
 const form = reactive({
   title:       props.card?.title       ?? '',
@@ -351,6 +361,7 @@ function pickType(key) {
 async function fetchMeta() {
   if (!form.website?.trim()) return
   fetching.value = true; fetchError.value = ''
+  alreadyOnSphir.value = null; filledByAi.value = false
   try {
     const data = await previewUrl(form.website.trim())
     if (!data) throw new Error('Could not fetch metadata')
@@ -363,6 +374,19 @@ async function fetchMeta() {
         selectedTypeKey.value = data.type
       }
       if (data.price && !form.price.trim()) form.price = data.price
+      // Already on Sphir: stored info only fills what the page left empty
+      const known = data.already_on_sphir && typeof data.already_on_sphir === 'object' ? data.already_on_sphir : null
+      alreadyOnSphir.value = known
+      if (known) {
+        if (known.title && !form.title.trim())  form.title = known.title
+        if (known.image && !form.image)         form.image = known.image
+        if (known.price && !form.price.trim())  form.price = known.price
+      }
+      filledByAi.value = data.ai === true
+      const sid = data.suggested_collection_id
+      if (sid != null && allCollections.value.some(c => String(c.id) === String(sid))) {
+        form.folderId = String(sid)
+      }
       const incoming = (Array.isArray(data.tags) ? data.tags : []).filter(t => t && !String(t).startsWith('_'))
       if (incoming.length) {
         const have = form.tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
@@ -495,6 +519,13 @@ async function save() {
 .new-collection-row { display: flex; gap: 8px; }
 .new-collection-row input { flex: 1; min-width: 0; }
 .field-hint-err { display: block; font-size: 12px; color: var(--danger); margin-top: 5px; }
+
+.sphir-notice, .ai-hint { font-size: 13px; margin-bottom: 12px; }
+.sphir-notice {
+  padding: 8px 12px; border-radius: 8px;
+  background: var(--surface); color: var(--text); font-weight: 500;
+}
+.ai-hint { color: var(--text-muted); }
 
 /* Image preview */
 .preview-thumb-wrap {
