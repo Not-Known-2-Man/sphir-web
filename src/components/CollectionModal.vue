@@ -9,7 +9,8 @@
         <div class="modal-body">
           <div class="field">
             <label>Name *</label>
-            <input v-model="form.name" type="text" placeholder="e.g. Reading List" autofocus />
+            <input v-model="form.name" type="text" placeholder="e.g. Reading List" :disabled="collection?.is_default" autofocus />
+            <span v-if="collection?.is_default" class="field-hint">This collection can't be renamed.</span>
           </div>
           <div class="field">
             <label>Description</label>

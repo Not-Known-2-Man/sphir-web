@@ -82,7 +82,7 @@
                     <button class="dots-btn" @click.stop="toggleMenu(col.id)">···</button>
                     <div v-if="openMenuId === col.id" class="card-menu">
                       <button @click.stop="openCollectionModal(col); openMenuId = null">Edit</button>
-                      <button class="menu-danger" @click.stop="askDeleteCollection(col); openMenuId = null">Delete</button>
+                      <button v-if="!col.is_default" class="menu-danger" @click.stop="askDeleteCollection(col); openMenuId = null">Delete</button>
                     </div>
                   </div>
                 </div>
@@ -153,7 +153,7 @@
                 <button class="dots-btn" @click.stop="toggleMenu(col.id)">···</button>
                 <div v-if="openMenuId === col.id" class="card-menu">
                   <button @click.stop="openCollectionModal(col); openMenuId = null">Edit</button>
-                  <button class="menu-danger" @click.stop="askDeleteCollection(col); openMenuId = null">Delete</button>
+                  <button v-if="!col.is_default" class="menu-danger" @click.stop="askDeleteCollection(col); openMenuId = null">Delete</button>
                 </div>
               </div>
             </div>
@@ -172,29 +172,6 @@
                 </button>
               </div>
             </router-link>
-          </div>
-        </div>
-
-        <!-- Uncategorized cards section -->
-        <div
-          v-if="filters.owner !== 'joined' && !loadingUncat && uncategorizedCards.length > 0"
-          class="uncat-section"
-        >
-          <div class="uncat-heading">Uncategorized</div>
-          <div class="uncat-list">
-            <div
-              v-for="card in uncategorizedCards" :key="card.id"
-              class="uncat-row"
-              @click="detailCard = card"
-            >
-              <div class="uncat-row-body">
-                <span class="uncat-category">{{ cardCategory(card) }}</span>
-                <span class="uncat-title">{{ card.title }}</span>
-                  <span v-if="cardPrice(card)" class="uncat-price">{{ cardPrice(card) }}</span>
-                <span v-if="card.description" class="uncat-desc">{{ card.description }}</span>
-              </div>
-              <span v-if="card.created_at" class="uncat-date">{{ formatDate(card.created_at) }}</span>
-            </div>
           </div>
         </div>
       </template>
@@ -291,10 +268,6 @@ function filterBySearch(list) {
 
 const activeList  = computed(() => filterBySearch(filteredCollections.value))
 const displayList = activeList
-
-const uncategorizedCards = computed(() =>
-  allCards.value.filter(c => c.folder_id === null || c.folder_id === undefined)
-)
 
 const searchedCards = computed(() => {
   if (!search.value) return []
@@ -408,7 +381,7 @@ async function doDelete() {
     collections.value = collections.value.filter(c => String(c.id) !== String(target.id))
     confirmTarget.value = null
     success('Collection deleted')
-  } catch { toastError('Failed to delete'); confirmTarget.value = null }
+  } catch (e) { toastError(e?.message || 'Failed to delete'); confirmTarget.value = null }
   finally { deleting.value = false }
 }
 </script>
@@ -599,13 +572,7 @@ async function doDelete() {
 .card-menu button:hover { background: var(--surface); }
 .card-menu button.menu-danger:hover { background: var(--danger-bg); color: var(--danger); }
 
-/* Uncategorized cards section */
-.uncat-section { margin-top: 44px; }
-.uncat-heading {
-  font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600;
-  color: var(--text-muted); text-transform: uppercase;
-  letter-spacing: .07em; margin-bottom: 14px;
-}
+/* Card rows (search results) */
 .uncat-list { display: flex; flex-direction: column; gap: 8px; }
 .uncat-row {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;

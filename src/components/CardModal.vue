@@ -98,24 +98,29 @@
 
             <div class="field">
               <label>Collection * <span v-if="loadingFolders" class="field-hint">Loading…</span></label>
-              <!-- A new account has no collections yet: let the user create one here. -->
-              <div v-if="!loadingFolders && allCollections.length === 0" class="new-collection">
-                <span class="field-hint">You have no collections yet. Name your first one:</span>
-                <div class="new-collection-row">
-                  <input v-model="newCollectionName" type="text" placeholder="e.g. Weekend Ideas"
-                    @keydown.enter.prevent="createFirstCollection" />
-                  <button class="btn btn-ghost" type="button"
-                    :disabled="!newCollectionName.trim() || creatingCollection"
-                    @click="createFirstCollection">
-                    <span v-if="creatingCollection" class="spinner"></span>
-                    <span v-else>Create</span>
-                  </button>
-                </div>
-              </div>
-              <select v-else v-model="form.folderId" :class="{ 'select-required': !form.folderId }">
+              <select v-if="allCollections.length > 0" v-model="form.folderId" :class="{ 'select-required': !form.folderId }">
                 <option value="" disabled>— Select a collection —</option>
                 <option v-for="c in allCollections" :key="c.id" :value="String(c.id)">{{ c.name }}</option>
               </select>
+              <button v-if="!loadingFolders && allCollections.length > 0 && !showNewCollection"
+                class="btn btn-ghost new-collection-btn" type="button" @click="showNewCollection = true">
+                + New collection
+              </button>
+              <div v-if="!loadingFolders && (showNewCollection || allCollections.length === 0)" class="new-collection">
+                <span v-if="allCollections.length === 0" class="field-hint">You have no collections yet. Name your first one:</span>
+                <div class="new-collection-row">
+                  <input v-model="newCollectionName" type="text" placeholder="e.g. Weekend Ideas"
+                    @keydown.enter.prevent="createNewCollection" />
+                  <button class="btn btn-ghost" type="button"
+                    :disabled="!newCollectionName.trim() || creatingCollection"
+                    @click="createNewCollection">
+                    <span v-if="creatingCollection" class="spinner"></span>
+                    <span v-else>Create</span>
+                  </button>
+                  <button v-if="allCollections.length > 0" class="btn btn-ghost" type="button"
+                    @click="showNewCollection = false; newCollectionName = ''">Cancel</button>
+                </div>
+              </div>
             </div>
 
             <div v-if="error" class="error-msg">{{ error }}</div>
@@ -252,8 +257,9 @@ const loadingFolders   = ref(false)
 const localCollections = ref([])
 const newCollectionName  = ref('')
 const creatingCollection = ref(false)
+const showNewCollection  = ref(false)
 
-async function createFirstCollection() {
+async function createNewCollection() {
   const name = newCollectionName.value.trim()
   if (!name || creatingCollection.value) return
   creatingCollection.value = true
@@ -261,7 +267,8 @@ async function createFirstCollection() {
   try {
     const created = await createCollection({ name, description: '', privacy: 'private' })
     if (!created?.id) throw new Error('The collection was not created')
-    localCollections.value = [created]
+    localCollections.value = [...localCollections.value, created]
+    showNewCollection.value = false
     form.folderId = String(created.id)
     newCollectionName.value = ''
   } catch (e) {
@@ -272,8 +279,8 @@ async function createFirstCollection() {
 }
 
 const allCollections = computed(() => {
-  if (props.collections.length > 0) return props.collections
-  return localCollections.value
+  const ids = new Set(props.collections.map(c => String(c.id)))
+  return [...props.collections, ...localCollections.value.filter(c => !ids.has(String(c.id)))]
 })
 
 const fileInput   = ref(null)
@@ -517,6 +524,7 @@ async function save() {
 .image-upload-row { display: flex; align-items: center; gap: 10px; }
 .new-collection { display: flex; flex-direction: column; gap: 6px; }
 .new-collection-row { display: flex; gap: 8px; }
+.new-collection-btn { align-self: flex-start; margin-top: 6px; }
 .new-collection-row input { flex: 1; min-width: 0; }
 .field-hint-err { display: block; font-size: 12px; color: var(--danger); margin-top: 5px; }
 
