@@ -1,3 +1,5 @@
+import { t } from './i18n.js'
+
 const BASE = '/api/v1'
 
 function authHeaders(authed) {
@@ -30,7 +32,7 @@ async function req(path, { method = 'GET', body, authed = true, query } = {}) {
   if (res.status === 401 && authed) {
     clearSession()
     window.location.href = '/login?reason=session_expired'
-    throw new Error('Session expired. Please sign in again.')
+    throw new Error(t('api.sessionExpired'))
   }
   if (!res.ok) {
     const data = await res.json().catch(() => ({}))

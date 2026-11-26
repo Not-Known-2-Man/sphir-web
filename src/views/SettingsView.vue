@@ -1,49 +1,71 @@
 <template>
   <div class="page-body-narrow">
     <div class="breadcrumb">
-      <router-link to="/">← Sphirs</router-link>
+      <router-link to="/">{{ t('settings.back') }}</router-link>
     </div>
 
-    <h1 class="settings-title">Settings</h1>
+    <h1 class="settings-title">{{ t('settings.title') }}</h1>
 
     <!-- Profile -->
     <section class="settings-card">
-      <div class="section-label">Account</div>
+      <div class="section-label">{{ t('settings.accountSection') }}</div>
       <div class="profile-row">
         <div class="avatar">{{ avatarLetter }}</div>
         <div class="profile-info">
-          <div class="profile-name">{{ store.displayName }}</div>
+          <div class="profile-name">{{ store.isGuest ? t('common.guest') : store.displayName }}</div>
           <div class="profile-uid">{{ store.uid }}</div>
-          <span v-if="store.isGuest" class="guest-chip">Guest Mode</span>
+          <span v-if="store.isGuest" class="guest-chip">{{ t('settings.guestMode') }}</span>
         </div>
       </div>
       <div v-if="!store.isGuest && (store.firstName || store.lastName)" class="info-row">
-        <span class="info-label">Name</span>
+        <span class="info-label">{{ t('settings.nameLabel') }}</span>
         <span class="info-value">{{ [store.firstName, store.lastName].filter(Boolean).join(' ') }}</span>
       </div>
       <div v-if="store.isGuest" class="guest-notice">
-        <p>You're browsing as a guest. Sign in to sync your Sphirs across devices.</p>
+        <p>{{ t('settings.guestNotice') }}</p>
         <router-link to="/login" class="btn btn-primary btn-sm" style="margin-top:12px;display:inline-flex">
-          Sign In
+          {{ t('settings.signIn') }}
         </router-link>
+      </div>
+    </section>
+
+    <!-- Language selector -->
+    <section class="settings-card">
+      <div class="section-label">{{ t('lang.selector') }}</div>
+      <div class="lang-switch" role="group" :aria-label="t('lang.selector')">
+        <button
+          type="button"
+          class="lang-btn"
+          :class="{ active: locale === 'en' }"
+          :aria-pressed="locale === 'en'"
+          @click="setLocale('en')"
+        >{{ t('lang.en') }}</button>
+        <span class="lang-divider">/</span>
+        <button
+          type="button"
+          class="lang-btn"
+          :class="{ active: locale === 'es' }"
+          :aria-pressed="locale === 'es'"
+          @click="setLocale('es')"
+        >{{ t('lang.es') }}</button>
       </div>
     </section>
 
     <!-- Session -->
     <section class="settings-card">
-      <div class="section-label">Session</div>
+      <div class="section-label">{{ t('settings.sessionSection') }}</div>
       <div v-if="signOutError" class="error-msg">{{ signOutError }}</div>
       <button class="btn-pill-lg sign-out-btn" :disabled="signingOut" @click="doSignOut">
         <span v-if="signingOut" class="spinner spinner-dark"></span>
-        <span v-else>Sign Out</span>
+        <span v-else>{{ t('settings.signOut') }}</span>
       </button>
-      <p class="sign-out-note">Clears your session and returns you to the login screen.</p>
+      <p class="sign-out-note">{{ t('settings.signOutNote') }}</p>
     </section>
 
     <!-- App info -->
     <section class="settings-card app-info-row">
-      <span class="app-name">SPHIR</span>
-      <span class="app-version">Web v0.1.0</span>
+      <span class="app-name">{{ t('settings.appName') }}</span>
+      <span class="app-version">{{ t('settings.appVersion') }}</span>
     </section>
   </div>
 </template>
@@ -53,12 +75,16 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { signOut } from '../api.js'
 import { store } from '../store.js'
+import { t, locale, setLocale } from '../i18n.js'
 
 const router       = useRouter()
 const signingOut   = ref(false)
 const signOutError = ref('')
 
-const avatarLetter = computed(() => (store.displayName || 'U').charAt(0).toUpperCase())
+const avatarLetter = computed(() => {
+  const name = store.isGuest ? t('common.guest') : store.displayName
+  return (name || 'U').charAt(0).toUpperCase()
+})
 
 async function doSignOut() {
   signingOut.value = true; signOutError.value = ''

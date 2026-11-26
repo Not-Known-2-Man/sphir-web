@@ -1,12 +1,31 @@
 <template>
   <div class="page">
     <div class="card">
-      <div class="logo">S</div>
-      <h1>{{ mode === 'login' ? 'Welcome back' : 'Create account' }}</h1>
-      <p class="subtitle">{{ mode === 'login' ? 'Sign in to your Sphir account' : 'Get started for free' }}</p>
+      <div class="login-header-row">
+        <div class="logo">S</div>
+        <div class="lang-switch" role="group" :aria-label="t('lang.selector')">
+          <button
+            type="button"
+            class="lang-btn"
+            :class="{ active: locale === 'en' }"
+            :aria-pressed="locale === 'en'"
+            @click="setLocale('en')"
+          >{{ t('lang.en') }}</button>
+          <span class="lang-divider">/</span>
+          <button
+            type="button"
+            class="lang-btn"
+            :class="{ active: locale === 'es' }"
+            :aria-pressed="locale === 'es'"
+            @click="setLocale('es')"
+          >{{ t('lang.es') }}</button>
+        </div>
+      </div>
+      <h1>{{ mode === 'login' ? t('login.welcomeBack') : t('login.createAccount') }}</h1>
+      <p class="subtitle">{{ mode === 'login' ? t('login.signInSubtitle') : t('login.signUpSubtitle') }}</p>
 
       <div v-if="sessionExpired && mode === 'login'" class="notice">
-        Session expired — please sign in again.
+        {{ t('login.sessionExpired') }}
       </div>
 
       <form @submit.prevent="submit">
@@ -14,34 +33,34 @@
         <template v-if="mode === 'signup'">
           <div class="field-row">
             <div class="field">
-              <label for="firstName">First name</label>
-              <input id="firstName" v-model="firstName" type="text" placeholder="Jane" autocomplete="given-name" />
+              <label for="firstName">{{ t('login.firstNameLabel') }}</label>
+              <input id="firstName" v-model="firstName" type="text" :placeholder="t('login.firstNamePlaceholder')" autocomplete="given-name" />
               <span v-if="fe.firstName" class="field-error">{{ fe.firstName }}</span>
             </div>
             <div class="field">
-              <label for="lastName">Last name</label>
-              <input id="lastName" v-model="lastName" type="text" placeholder="Doe" autocomplete="family-name" />
+              <label for="lastName">{{ t('login.lastNameLabel') }}</label>
+              <input id="lastName" v-model="lastName" type="text" :placeholder="t('login.lastNamePlaceholder')" autocomplete="family-name" />
               <span v-if="fe.lastName" class="field-error">{{ fe.lastName }}</span>
             </div>
           </div>
         </template>
 
         <div class="field">
-          <label for="email">Email</label>
+          <label for="email">{{ t('login.emailLabel') }}</label>
           <input id="email" v-model="email" type="email" placeholder="you@example.com"
             autocomplete="email" />
           <span v-if="fe.email" class="field-error">{{ fe.email }}</span>
         </div>
 
         <div class="field">
-          <label for="password">Password</label>
+          <label for="password">{{ t('login.passwordLabel') }}</label>
           <input id="password" v-model="password" type="password" placeholder="••••••••"
             :autocomplete="mode === 'login' ? 'current-password' : 'new-password'" />
           <span v-if="fe.password" class="field-error">{{ fe.password }}</span>
         </div>
 
         <div v-if="mode === 'signup'" class="field">
-          <label for="confirm">Confirm password</label>
+          <label for="confirm">{{ t('login.confirmPasswordLabel') }}</label>
           <input id="confirm" v-model="confirm" type="password" placeholder="••••••••"
             autocomplete="new-password" />
           <span v-if="fe.confirm" class="field-error">{{ fe.confirm }}</span>
@@ -51,18 +70,18 @@
 
         <button type="submit" class="btn-primary" :disabled="loading">
           <span v-if="loading" class="spinner"></span>
-          <span v-else>{{ mode === 'login' ? 'Sign In' : 'Create Account' }}</span>
+          <span v-else>{{ mode === 'login' ? t('auth.signInBtn') : t('auth.signUpBtn') }}</span>
         </button>
       </form>
 
       <div class="toggle-row">
         <template v-if="mode === 'login'">
-          Don't have an account?
-          <button class="toggle-btn" @click="switchMode('signup')">Sign up</button>
+          {{ t('login.noAccount') }}
+          <button class="toggle-btn" @click="switchMode('signup')">{{ t('login.signUpLink') }}</button>
         </template>
         <template v-else>
-          Already have an account?
-          <button class="toggle-btn" @click="switchMode('login')">Sign in</button>
+          {{ t('login.hasAccount') }}
+          <button class="toggle-btn" @click="switchMode('login')">{{ t('login.signInLink') }}</button>
         </template>
       </div>
     </div>
@@ -74,6 +93,7 @@ import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { signIn, signUp } from '../api.js'
 import { store } from '../store.js'
+import { t, locale, setLocale } from '../i18n.js'
 
 const router = useRouter()
 const route  = useRoute()
@@ -99,14 +119,14 @@ function switchMode(m) {
 function validateSignUp() {
   let valid = true
   Object.keys(fe).forEach(k => fe[k] = '')
-  if (!firstName.value.trim()) { fe.firstName = 'Required'; valid = false }
-  if (!lastName.value.trim())  { fe.lastName  = 'Required'; valid = false }
-  if (!email.value.trim())     { fe.email     = 'Required'; valid = false }
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) { fe.email = 'Enter a valid email'; valid = false }
-  if (!password.value)         { fe.password  = 'Required'; valid = false }
-  else if (password.value.length < 6) { fe.password = 'At least 6 characters'; valid = false }
-  if (!confirm.value)          { fe.confirm   = 'Required'; valid = false }
-  else if (confirm.value !== password.value) { fe.confirm = 'Passwords do not match'; valid = false }
+  if (!firstName.value.trim()) { fe.firstName = t('common.required'); valid = false }
+  if (!lastName.value.trim())  { fe.lastName  = t('common.required'); valid = false }
+  if (!email.value.trim())     { fe.email     = t('common.required'); valid = false }
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) { fe.email = t('login.validEmailRequired'); valid = false }
+  if (!password.value)         { fe.password  = t('common.required'); valid = false }
+  else if (password.value.length < 6) { fe.password = t('login.passwordMin'); valid = false }
+  if (!confirm.value)          { fe.confirm   = t('common.required'); valid = false }
+  else if (confirm.value !== password.value) { fe.confirm = t('login.passwordsMismatch'); valid = false }
   return valid
 }
 
@@ -128,7 +148,7 @@ async function submit() {
       router.push('/')
     }
   } catch (e) {
-    formError.value = e.message || (mode.value === 'login' ? 'Sign in failed. Check your credentials.' : 'Could not create account.')
+    formError.value = e.message || (mode.value === 'login' ? t('login.signInFailed') : t('login.createAccountFailed'))
   } finally {
     loading.value = false
   }
@@ -147,12 +167,16 @@ async function submit() {
   padding: 40px 36px; width: 100%; max-width: 420px;
 }
 
+.login-header-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+
 .logo {
   width: 56px; height: 56px; border-radius: 50%;
   background: var(--taupe, #8A7A5E); color: #fff;
   font-size: 24px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
-  margin-bottom: 20px;
 }
 
 h1 { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px; }

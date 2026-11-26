@@ -1,4 +1,5 @@
 import { reactive } from 'vue'
+import { t } from './i18n.js'
 
 const LS = {
   get: (k) => localStorage.getItem(k),
@@ -20,9 +21,9 @@ export const store = reactive({
   get isLoggedIn() { return !!this.token },
 
   get displayName() {
-    if (this.isGuest) return 'Guest'
+    if (this.isGuest) return t('common.guest')
     const full = [this.firstName, this.lastName].filter(Boolean).join(' ')
-    return full || this.uid?.split('@')[0] || 'User'
+    return full || this.uid?.split('@')[0] || t('common.user')
   },
 
   login(data) {
