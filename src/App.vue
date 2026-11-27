@@ -3,22 +3,39 @@
     <Toast />
     <!-- Fixed global header -->
     <header v-if="store.isLoggedIn" class="site-header">
-      <router-link to="/" class="logo" aria-label="Sphir home">
+      <router-link to="/" class="logo" :aria-label="t('nav.home')">
         <img src="/assets/sphir-logo.svg" alt="Sphir" width="110" height="25" />
       </router-link>
 
       <!-- Desktop navigation -->
       <nav class="header-right">
-        <router-link to="/" class="header-search">Search</router-link>
+        <router-link to="/" class="header-search">{{ t('nav.search') }}</router-link>
         <div class="header-actions">
-          <button class="header-card-btn" @click="handleCreateCard">+ Card</button>
-          <button class="header-icon-btn" title="Notifications" aria-label="Notifications">
+          <div class="lang-switch" role="group" :aria-label="t('lang.selector')">
+            <button
+              type="button"
+              class="lang-btn"
+              :class="{ active: locale === 'en' }"
+              :aria-pressed="locale === 'en'"
+              @click="setLocale('en')"
+            >{{ t('lang.en') }}</button>
+            <span class="lang-divider">/</span>
+            <button
+              type="button"
+              class="lang-btn"
+              :class="{ active: locale === 'es' }"
+              :aria-pressed="locale === 'es'"
+              @click="setLocale('es')"
+            >{{ t('lang.es') }}</button>
+          </div>
+          <button class="header-card-btn" @click="handleCreateCard">{{ t('nav.addCard') }}</button>
+          <button class="header-icon-btn" :title="t('nav.notifications')" :aria-label="t('nav.notifications')">
             <img src="/assets/notification.png" alt="" width="25" height="25" />
           </button>
-          <button class="header-icon-btn" title="Connections" aria-label="Connections">
+          <button class="header-icon-btn" :title="t('nav.connections')" :aria-label="t('nav.connections')">
             <img src="/assets/connections.png" alt="" width="25" height="25" />
           </button>
-          <router-link to="/settings" class="header-avatar" :title="store.displayName" aria-label="Account">
+          <router-link to="/settings" class="header-avatar" :title="store.displayName" :aria-label="t('nav.account')">
             <svg viewBox="0 0 40 40" aria-hidden="true">
               <circle cx="20" cy="20" r="20" fill="#B8B8B8"/>
               <circle cx="20" cy="15.5" r="6.5" fill="#6E6E6E"/>
@@ -29,7 +46,7 @@
       </nav>
 
       <!-- Mobile menu toggle -->
-      <button class="header-burger" aria-label="Open menu" @click="menuOpen = true">
+      <button class="header-burger" :aria-label="t('nav.openMenu')" @click="menuOpen = true">
         <span></span><span></span><span></span>
       </button>
     </header>
@@ -41,29 +58,48 @@
           <div class="side-menu-name">{{ store.displayName }}</div>
           <div class="side-menu-email">{{ store.uid }}</div>
         </div>
-        <router-link to="/" class="side-menu-search" @click="menuOpen = false">Search</router-link>
+        <div class="side-menu-lang-row">
+          <div class="lang-switch" role="group" :aria-label="t('lang.selector')">
+            <button
+              type="button"
+              class="lang-btn"
+              :class="{ active: locale === 'en' }"
+              :aria-pressed="locale === 'en'"
+              @click="setLocale('en')"
+            >{{ t('lang.en') }}</button>
+            <span class="lang-divider">/</span>
+            <button
+              type="button"
+              class="lang-btn"
+              :class="{ active: locale === 'es' }"
+              :aria-pressed="locale === 'es'"
+              @click="setLocale('es')"
+            >{{ t('lang.es') }}</button>
+          </div>
+        </div>
+        <router-link to="/" class="side-menu-search" @click="menuOpen = false">{{ t('nav.search') }}</router-link>
         <div class="side-menu-row">
-          <button class="side-menu-card" @click="menuOpen = false; handleCreateCard()">+ Card</button>
-          <img src="/assets/connections.png" alt="Connections" width="25" height="25" />
+          <button class="side-menu-card" @click="menuOpen = false; handleCreateCard()">{{ t('nav.addCard') }}</button>
+          <img src="/assets/connections.png" :alt="t('nav.connections')" width="25" height="25" />
         </div>
         <button class="side-menu-item" @click="menuOpen = false">
           <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          My Archive
+          {{ t('nav.myArchive') }}
         </button>
         <router-link to="/settings" class="side-menu-item" @click="menuOpen = false">
           <svg viewBox="0 0 24 24"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="9" cy="8" r="2.2"/><circle cx="15" cy="16" r="2.2"/></svg>
-          Account Settings
+          {{ t('nav.accountSettings') }}
         </router-link>
         <button class="side-menu-item" @click="menuOpen = false">
           <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M10 9a2 2 0 1 1 2.5 1.9c-.4.2-.5.5-.5.9"/><circle cx="12" cy="13.6" r=".4"/></svg>
-          Help &amp; User Information
+          {{ t('nav.help') }}
         </button>
         <button class="side-menu-item" @click="menuOpen = false">
           <svg viewBox="0 0 24 24"><line x1="12" y1="3" x2="12" y2="21"/><path d="M6 9h12M8 21h8"/><circle cx="12" cy="9" r="1"/></svg>
-          Legal
+          {{ t('nav.legal') }}
         </button>
         <div class="side-menu-logout-wrap">
-          <button class="side-menu-logout" @click="handleLogout">Log Out</button>
+          <button class="side-menu-logout" @click="handleLogout">{{ t('nav.logOut') }}</button>
         </div>
       </aside>
     </div>
@@ -78,6 +114,7 @@ import Toast from './components/Toast.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { signOut } from './api.js'
 import { store } from './store.js'
+import { t, locale, setLocale } from './i18n.js'
 
 const router = useRouter()
 const route  = useRoute()
@@ -185,10 +222,42 @@ input, select, textarea { font-family: inherit; outline: none; }
   display: inline-flex; align-items: center;
   font-size: 15px; color: #000;
 }
-.header-actions { display: flex; align-items: center; gap: 40px; }
+.header-actions { display: flex; align-items: center; gap: 24px; }
+
+/* Language switcher */
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 3px 8px;
+}
+.lang-btn {
+  background: transparent;
+  color: var(--text-muted);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 12px;
+  transition: color .15s, background .15s;
+  line-height: 1.2;
+}
+.lang-btn:hover { color: var(--text); }
+.lang-btn.active {
+  color: #fff;
+  background: var(--accent);
+}
+.lang-divider {
+  font-size: 11px;
+  color: var(--border-dk);
+  user-select: none;
+}
 
 .header-card-btn {
-  width: 127px; height: 40px; margin-right: 10px;
+  width: 127px; height: 40px; margin-right: 4px;
   background: var(--accent); color: #fff;
   border-radius: 20px;
   font-family: 'Montserrat', sans-serif;
@@ -248,6 +317,10 @@ input, select, textarea { font-family: inherit; outline: none; }
 .side-menu-email {
   font-size: 13px; color: #000;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.side-menu-lang-row {
+  display: flex; justify-content: center;
+  padding: 10px 20px 12px; border-bottom: 1px solid #E6E7E8;
 }
 .side-menu-search {
   display: block; text-align: center;

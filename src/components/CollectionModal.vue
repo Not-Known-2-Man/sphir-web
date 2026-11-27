@@ -3,35 +3,35 @@
     <div class="overlay" @click.self="$emit('cancel')">
       <div class="modal">
         <div class="modal-head">
-          <span class="modal-title">{{ collection ? 'Edit Sphir' : 'New Sphir' }}</span>
-          <button class="modal-close" @click="$emit('cancel')">×</button>
+          <span class="modal-title">{{ collection ? t('colModal.editTitle') : t('colModal.newTitle') }}</span>
+          <button class="modal-close" :aria-label="t('common.close')" @click="$emit('cancel')">×</button>
         </div>
         <div class="modal-body">
           <div class="field">
-            <label>Name *</label>
-            <input v-model="form.name" type="text" placeholder="e.g. Reading List" :disabled="collection?.is_default" autofocus />
-            <span v-if="collection?.is_default" class="field-hint">This collection can't be renamed.</span>
+            <label>{{ t('colModal.nameLabel') }}</label>
+            <input v-model="form.name" type="text" :placeholder="t('colModal.namePlaceholder')" :disabled="collection?.is_default" autofocus />
+            <span v-if="collection?.is_default" class="field-hint">{{ t('colModal.defaultColHint') }}</span>
           </div>
           <div class="field">
-            <label>Description</label>
-            <textarea v-model="form.description" placeholder="What's this Sphir for?" rows="3" />
+            <label>{{ t('colModal.descLabel') }}</label>
+            <textarea v-model="form.description" :placeholder="t('colModal.descPlaceholder')" rows="3" />
           </div>
           <div class="field">
-            <label>Privacy</label>
+            <label>{{ t('colModal.privacyLabel') }}</label>
             <select v-model="form.privacy">
-              <option value="private">Private — only you</option>
-              <option value="connections">Connections — people you follow</option>
-              <option value="public">Public — everyone</option>
+              <option value="private">{{ t('privacy.privateOption') }}</option>
+              <option value="connections">{{ t('privacy.connectionsOption') }}</option>
+              <option value="public">{{ t('privacy.publicOption') }}</option>
             </select>
           </div>
 
           <div v-if="error" class="error-msg">{{ error }}</div>
 
           <div class="modal-actions">
-            <button class="btn btn-ghost" @click="$emit('cancel')">Cancel</button>
+            <button class="btn btn-ghost" @click="$emit('cancel')">{{ t('common.cancel') }}</button>
             <button class="btn btn-primary" :disabled="!form.name.trim() || loading" @click="submit">
               <span v-if="loading" class="spinner"></span>
-              <span v-else>{{ collection ? 'Save Changes' : 'Create Sphir' }}</span>
+              <span v-else>{{ collection ? t('common.saveChanges') : t('colModal.createBtn') }}</span>
             </button>
           </div>
         </div>
@@ -43,6 +43,7 @@
 <script setup>
 import { reactive, ref, watch } from 'vue'
 import { createCollection, updateCollection } from '../api.js'
+import { t } from '../i18n.js'
 
 const props = defineProps({ collection: { type: Object, default: null } })
 const emit  = defineEmits(['saved', 'cancel'])

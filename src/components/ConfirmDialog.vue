@@ -3,13 +3,13 @@
     <div class="overlay" @click.self="$emit('cancel')">
       <div class="confirm-box">
         <div class="confirm-icon">{{ icon }}</div>
-        <p class="confirm-msg">{{ message }}</p>
+        <p class="confirm-msg">{{ message || t('common.areYouSure') }}</p>
         <p v-if="sub" class="confirm-sub">{{ sub }}</p>
         <div class="confirm-actions">
-          <button class="btn btn-ghost btn-sm" @click="$emit('cancel')">Cancel</button>
+          <button class="btn btn-ghost btn-sm" @click="$emit('cancel')">{{ t('common.cancel') }}</button>
           <button class="btn btn-danger-solid btn-sm" :disabled="loading" @click="$emit('confirm')">
             <span v-if="loading" class="spinner"></span>
-            <span v-else>{{ confirmText }}</span>
+            <span v-else>{{ confirmText || t('common.delete') }}</span>
           </button>
         </div>
       </div>
@@ -18,10 +18,12 @@
 </template>
 
 <script setup>
+import { t } from '../i18n.js'
+
 defineProps({
-  message:     { type: String,  default: 'Are you sure?' },
+  message:     { type: String,  default: '' },
   sub:         { type: String,  default: '' },
-  confirmText: { type: String,  default: 'Delete' },
+  confirmText: { type: String,  default: '' },
   icon:        { type: String,  default: '🗑️' },
   loading:     { type: Boolean, default: false }
 })

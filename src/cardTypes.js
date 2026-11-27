@@ -1,12 +1,23 @@
 // Shared card-type vocabulary and card helpers.
 // A card's type is stored as the hidden tag "_<type>" (underscore tags are never shown).
 
-export const TYPE_LABEL = {
+import { t } from './i18n.js'
+
+export const TYPE_LABEL_EN = {
   article: 'ARTICLE', video: 'VIDEO', recipe: 'RECIPE', social: 'SOCIAL POST',
   product: 'PRODUCT', business: 'BUSINESS', text: 'TEXT', media: 'MEDIA',
   scribe: 'ORIGINAL SCRIBE', originalScribe: 'ORIGINAL SCRIBE', // iOS stores "_originalScribe"
   url: 'LINK', note: 'NOTE', photo: 'PHOTO', screenshot: 'SCREENSHOT', contact: 'CONTACT',
 }
+
+export const TYPE_LABEL = new Proxy(TYPE_LABEL_EN, {
+  get(target, prop) {
+    if (typeof prop === 'string' && prop in target) {
+      return t(`cardType.${prop}`)
+    }
+    return Reflect.get(target, prop)
+  }
+})
 
 export const TYPE_EMOJI = {
   article: '📰', video: '🎬', recipe: '🍳', social: '💬', product: '🛍️',
@@ -34,9 +45,11 @@ function isInstagramReel(website) {
 // Social cards from an Instagram reel read "INSTAGRAM REEL" (Figma).
 export function typeLabel(card) {
   const tags = parseTags(card?.tags)
-  for (const [k, v] of Object.entries(TYPE_LABEL)) {
+  for (const k of Object.keys(TYPE_LABEL_EN)) {
     if (!tags.includes(`_${k}`)) continue
-    return k === 'social' && isInstagramReel(card.website) ? 'INSTAGRAM REEL' : v
+    return k === 'social' && isInstagramReel(card?.website)
+      ? t('cardType.instagramReel')
+      : t(`cardType.${k}`)
   }
   return ''
 }

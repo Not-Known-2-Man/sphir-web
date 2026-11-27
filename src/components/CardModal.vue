@@ -5,19 +5,17 @@
 
         <!-- ── Step 1: Card Type Selector ─────────────────────────── -->
         <template v-if="step === 1">
-          <button class="modal-close-abs" @click="$emit('cancel')">×</button>
+          <button class="modal-close-abs" :aria-label="t('common.close')" @click="$emit('cancel')">×</button>
           <div class="type-sel-head">
-            <h2 class="type-sel-title">Select Card Type</h2>
+            <h2 class="type-sel-title">{{ t('cardTypeSelector.title') }}</h2>
             <p class="type-sel-sub">
-              The Card Type is the category that the subject of the card best fits into.
-              For example, to save an online article in a card, choose "Text" Card Type below.
-              Click <a href="#" class="type-sel-link" @click.prevent>here</a> to learn more about creating cards.
+              {{ t('cardTypeSelector.subtitle', { link: '___LINK___' }).split('___LINK___')[0] }}<a href="#" class="type-sel-link" @click.prevent>{{ t('cardTypeSelector.here') }}</a>{{ t('cardTypeSelector.subtitle', { link: '___LINK___' }).split('___LINK___')[1] }}
             </p>
           </div>
           <div class="type-rows">
-            <div v-for="t in CARD_TYPES" :key="t.key" class="type-row">
-              <button class="type-pill" @click="pickType(t.key)">{{ t.label }}</button>
-              <span class="type-row-desc">{{ t.desc }}</span>
+            <div v-for="tItem in CARD_TYPES" :key="tItem.key" class="type-row">
+              <button class="type-pill" @click="pickType(tItem.key)">{{ tItem.label }}</button>
+              <span class="type-row-desc">{{ tItem.desc }}</span>
             </div>
           </div>
         </template>
@@ -25,25 +23,25 @@
         <!-- ── Step 2: Form ────────────────────────────────────────── -->
         <template v-else>
           <div class="modal-head">
-            <button v-if="!isEdit" class="modal-back" @click="step = 1">← Back</button>
-            <span class="modal-title">{{ isEdit ? 'Edit Card' : (currentType?.label ?? 'New Card') }}</span>
-            <button class="modal-close" @click="$emit('cancel')">×</button>
+            <button v-if="!isEdit" class="modal-back" @click="step = 1">{{ t('common.back') }}</button>
+            <span class="modal-title">{{ isEdit ? t('cardModal.editCard') : (currentType?.label ?? t('cardModal.newCard')) }}</span>
+            <button class="modal-close" :aria-label="t('common.close')" @click="$emit('cancel')">×</button>
           </div>
           <div class="modal-body">
 
             <!-- Link already saved by other people (count only, never who) -->
             <div v-if="alreadyOnSphir" class="sphir-notice">{{ alreadyOnSphirText }}</div>
-            <div v-if="filledByAi" class="ai-hint">Filled by AI · edit anything</div>
+            <div v-if="filledByAi" class="ai-hint">{{ t('cardModal.filledByAi') }}</div>
 
             <!-- Image upload / paste -->
             <div class="field">
-              <label>Image <span class="field-hint">(choose a file or paste with Cmd/Ctrl+V)</span></label>
+              <label>{{ t('cardModal.imageLabel') }} <span class="field-hint">{{ t('cardModal.imageHint') }}</span></label>
               <div class="image-upload-row">
                 <button class="btn btn-ghost" type="button" :disabled="uploading" @click="fileInput?.click()">
                   <span v-if="uploading" class="spinner"></span>
-                  <span v-else>Choose image…</span>
+                  <span v-else>{{ t('cardModal.chooseImage') }}</span>
                 </button>
-                <span v-if="uploading" class="field-hint">{{ uploadStage }}</span>
+                <span v-if="uploading" class="field-hint">{{ uploadStageText }}</span>
                 <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" hidden @change="onFilePicked" />
               </div>
               <span v-if="uploadError" class="field-hint-err">{{ uploadError }}</span>
@@ -51,33 +49,33 @@
 
             <!-- OG image preview -->
             <div v-if="form.image" class="preview-thumb-wrap">
-              <img :src="form.image" class="preview-thumb" alt="Preview" />
-              <button class="preview-remove" @click="form.image = ''" title="Remove image">×</button>
+              <img :src="form.image" class="preview-thumb" :alt="t('cardModal.imagePreviewAlt')" />
+              <button class="preview-remove" @click="form.image = ''" :title="t('cardModal.removeImage')">×</button>
             </div>
 
             <div class="field">
-              <label>Title *</label>
+              <label>{{ t('cardModal.titleLabel') }}</label>
               <input v-model="form.title" type="text"
-                :placeholder="currentType?.titlePlaceholder ?? 'Card title'"
+                :placeholder="currentType?.titlePlaceholder ?? t('cardModal.defaultTitlePlaceholder')"
                 autofocus />
             </div>
 
             <div class="field">
-              <label>Description</label>
+              <label>{{ t('cardModal.descriptionLabel') }}</label>
               <textarea v-model="form.description" rows="3"
-                :placeholder="currentType?.descPlaceholder ?? 'Description…'" />
+                :placeholder="currentType?.descPlaceholder ?? t('cardModal.defaultDescPlaceholder')" />
             </div>
 
             <div class="field">
               <label>
-                Website URL
-                <span v-if="fetching" class="field-hint">Fetching metadata…</span>
+                {{ t('cardModal.websiteLabel') }}
+                <span v-if="fetching" class="field-hint">{{ t('cardModal.fetchingMeta') }}</span>
               </label>
               <div class="url-input-wrap">
                 <input
                   v-model="form.website"
                   type="url"
-                  placeholder="https://…"
+                  :placeholder="t('cardModal.urlPlaceholder')"
                   @blur="onUrlBlur"
                   @paste.prevent="onUrlPaste"
                 />
@@ -87,38 +85,38 @@
             </div>
 
             <div class="field">
-              <label>Price <span class="field-hint">(optional)</span></label>
-              <input v-model="form.price" type="text" placeholder="$29.99" />
+              <label>{{ t('cardModal.priceLabel') }} <span class="field-hint">({{ t('common.optional') }})</span></label>
+              <input v-model="form.price" type="text" :placeholder="t('cardModal.pricePlaceholder')" />
             </div>
 
             <div class="field">
-              <label>Tags <span class="field-hint">(comma-separated)</span></label>
-              <input v-model="form.tagsRaw" type="text" placeholder="design, reading, work" />
+              <label>{{ t('cardModal.tagsLabel') }} <span class="field-hint">({{ t('common.commaSeparated') }})</span></label>
+              <input v-model="form.tagsRaw" type="text" :placeholder="t('cardModal.tagsPlaceholder')" />
             </div>
 
             <div class="field">
-              <label>Collection * <span v-if="loadingFolders" class="field-hint">Loading…</span></label>
+              <label>{{ t('cardModal.collectionLabel') }} <span v-if="loadingFolders" class="field-hint">{{ t('common.loading') }}</span></label>
               <select v-if="allCollections.length > 0" v-model="form.folderId" :class="{ 'select-required': !form.folderId }">
-                <option value="" disabled>— Select a collection —</option>
+                <option value="" disabled>{{ t('cardModal.selectCollection') }}</option>
                 <option v-for="c in allCollections" :key="c.id" :value="String(c.id)">{{ c.name }}</option>
               </select>
               <button v-if="!loadingFolders && allCollections.length > 0 && !showNewCollection"
                 class="btn btn-ghost new-collection-btn" type="button" @click="showNewCollection = true">
-                + New collection
+                {{ t('cardModal.newCollectionBtn') }}
               </button>
               <div v-if="!loadingFolders && (showNewCollection || allCollections.length === 0)" class="new-collection">
-                <span v-if="allCollections.length === 0" class="field-hint">You have no collections yet. Name your first one:</span>
+                <span v-if="allCollections.length === 0" class="field-hint">{{ t('cardModal.noCollectionsHint') }}</span>
                 <div class="new-collection-row">
-                  <input v-model="newCollectionName" type="text" placeholder="e.g. Weekend Ideas"
+                  <input v-model="newCollectionName" type="text" :placeholder="t('cardModal.newCollectionPlaceholder')"
                     @keydown.enter.prevent="createNewCollection" />
                   <button class="btn btn-ghost" type="button"
                     :disabled="!newCollectionName.trim() || creatingCollection"
                     @click="createNewCollection">
                     <span v-if="creatingCollection" class="spinner"></span>
-                    <span v-else>Create</span>
+                    <span v-else>{{ t('common.create') }}</span>
                   </button>
                   <button v-if="allCollections.length > 0" class="btn btn-ghost" type="button"
-                    @click="showNewCollection = false; newCollectionName = ''">Cancel</button>
+                    @click="showNewCollection = false; newCollectionName = ''">{{ t('common.cancel') }}</button>
                 </div>
               </div>
             </div>
@@ -126,12 +124,12 @@
             <div v-if="error" class="error-msg">{{ error }}</div>
 
             <div class="modal-actions">
-              <button class="btn btn-ghost" @click="$emit('cancel')">Cancel</button>
+              <button class="btn btn-ghost" @click="$emit('cancel')">{{ t('common.cancel') }}</button>
               <button class="btn btn-primary"
                 :disabled="!form.title.trim() || !form.folderId || saving || uploading"
                 @click="save">
                 <span v-if="saving" class="spinner"></span>
-                <span v-else>{{ isEdit ? 'Save Changes' : 'Add Card' }}</span>
+                <span v-else>{{ isEdit ? t('common.saveChanges') : t('cardModal.addCard') }}</span>
               </button>
             </div>
           </div>
@@ -147,72 +145,73 @@ import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { createCard, updateCard, fetchCollections, createCollection, previewUrl, uploadImage } from '../api.js'
 import { resizeToJpegDataUrl, IMAGE_TYPES } from '../utils/imageResize.js'
 import { useToast } from '../composables/useToast.js'
+import { t } from '../i18n.js'
 
-const CARD_TYPES = [
+const CARD_TYPES = computed(() => [
   {
     key: 'article',
-    label: 'Article',
-    desc: 'News story, Blog Post, Essay, Report, etc.',
-    titlePlaceholder: 'Article title…',
-    descPlaceholder:  'Summary, notes, key points…',
+    label: t('cardTypes.article.label'),
+    desc: t('cardTypes.article.desc'),
+    titlePlaceholder: t('cardTypes.article.titlePlaceholder'),
+    descPlaceholder:  t('cardTypes.article.descPlaceholder'),
   },
   {
     key: 'video',
-    label: 'Video',
-    desc: 'YouTube, Vimeo, TikTok or any video.',
-    titlePlaceholder: 'Video title…',
-    descPlaceholder:  'Description, notes, timestamps…',
+    label: t('cardTypes.video.label'),
+    desc: t('cardTypes.video.desc'),
+    titlePlaceholder: t('cardTypes.video.titlePlaceholder'),
+    descPlaceholder:  t('cardTypes.video.descPlaceholder'),
   },
   {
     key: 'recipe',
-    label: 'Recipe',
-    desc: 'A dish, ingredients and steps.',
-    titlePlaceholder: 'Recipe name…',
-    descPlaceholder:  'Ingredients, notes, timing…',
+    label: t('cardTypes.recipe.label'),
+    desc: t('cardTypes.recipe.desc'),
+    titlePlaceholder: t('cardTypes.recipe.titlePlaceholder'),
+    descPlaceholder:  t('cardTypes.recipe.descPlaceholder'),
   },
   {
     key: 'social',
-    label: 'Social post',
-    desc: 'Instagram, X, Facebook or Threads post.',
-    titlePlaceholder: 'Post title or author…',
-    descPlaceholder:  'Caption, notes…',
+    label: t('cardTypes.social.label'),
+    desc: t('cardTypes.social.desc'),
+    titlePlaceholder: t('cardTypes.social.titlePlaceholder'),
+    descPlaceholder:  t('cardTypes.social.descPlaceholder'),
   },
   {
     key: 'text',
-    label: 'Text',
-    desc: 'Article, Blog Post, Document, Slide Deck, Study, etc.',
-    titlePlaceholder: 'Article title, document name…',
-    descPlaceholder:  'Summary, notes, key points…',
+    label: t('cardTypes.text.label'),
+    desc: t('cardTypes.text.desc'),
+    titlePlaceholder: t('cardTypes.text.titlePlaceholder'),
+    descPlaceholder:  t('cardTypes.text.descPlaceholder'),
   },
   {
     key: 'media',
-    label: 'Media',
-    desc: 'Video, Podcast, Audio File, etc.',
-    titlePlaceholder: 'Video title, podcast episode…',
-    descPlaceholder:  'Description, notes, timestamps…',
+    label: t('cardTypes.media.label'),
+    desc: t('cardTypes.media.desc'),
+    titlePlaceholder: t('cardTypes.media.titlePlaceholder'),
+    descPlaceholder:  t('cardTypes.media.descPlaceholder'),
   },
   {
     key: 'business',
-    label: 'Business',
-    desc: 'Company, Organization, Professional, Website, etc.',
-    titlePlaceholder: 'Company name, organization…',
-    descPlaceholder:  'What they do, notes, contacts…',
+    label: t('cardTypes.business.label'),
+    desc: t('cardTypes.business.desc'),
+    titlePlaceholder: t('cardTypes.business.titlePlaceholder'),
+    descPlaceholder:  t('cardTypes.business.descPlaceholder'),
   },
   {
     key: 'product',
-    label: 'Product',
-    desc: 'Physical or digital Product, App, Book, etc.',
-    titlePlaceholder: 'Product name, app or book title…',
-    descPlaceholder:  'What it does, why it matters…',
+    label: t('cardTypes.product.label'),
+    desc: t('cardTypes.product.desc'),
+    titlePlaceholder: t('cardTypes.product.titlePlaceholder'),
+    descPlaceholder:  t('cardTypes.product.descPlaceholder'),
   },
   {
     key: 'scribe',
-    label: 'Original Scribe',
-    desc: 'Your own unique article or blog post with customized layout.',
-    titlePlaceholder: 'Your article title…',
-    descPlaceholder:  'Your article content…',
+    label: t('cardTypes.scribe.label'),
+    desc: t('cardTypes.scribe.desc'),
+    titlePlaceholder: t('cardTypes.scribe.titlePlaceholder'),
+    descPlaceholder:  t('cardTypes.scribe.descPlaceholder'),
   },
-]
+])
 
 // Map legacy type tags to new types for edit mode
 const LEGACY_TYPE_MAP = { url: 'text', note: 'text', photo: 'media', screenshot: 'media', contact: 'business' }
@@ -230,7 +229,7 @@ const isEdit         = computed(() => !!props.card)
 const step           = ref(isEdit.value ? 2 : 1)
 const selectedTypeKey = ref(isEdit.value ? inferType(props.card) : null)
 
-const currentType = computed(() => CARD_TYPES.find(t => t.key === selectedTypeKey.value) ?? null)
+const currentType = computed(() => CARD_TYPES.value.find(tItem => tItem.key === selectedTypeKey.value) ?? null)
 
 const fetching   = ref(false)
 const fetchError = ref('')
@@ -238,7 +237,8 @@ const alreadyOnSphir = ref(null)   // { count, title, image, price } from the pr
 const filledByAi     = ref(false)
 const alreadyOnSphirText = computed(() => {
   const n = Number(alreadyOnSphir.value?.count) || 0
-  return `Already on Sphir · ${n} ${n === 1 ? 'person' : 'people'} saved it`
+  if (n === 1) return t('cardModal.alreadyOnSphirOne')
+  return t('cardModal.alreadyOnSphirMany', { count: n })
 })
 
 const form = reactive({
@@ -247,7 +247,7 @@ const form = reactive({
   website:     props.card?.website     ?? '',
   image:       props.card?.og_image    ?? props.card?.image ?? '',
   price:       props.card?.price       ?? '',
-  tagsRaw:     parseTags(props.card?.tags ?? []).filter(t => !t.startsWith('_')).join(', '),
+  tagsRaw:     parseTags(props.card?.tags ?? []).filter(tTag => !tTag.startsWith('_')).join(', '),
   folderId:    String(props.card?.folder_id ?? props.defaultFolderId ?? ''),
 })
 
@@ -266,13 +266,13 @@ async function createNewCollection() {
   error.value = ''
   try {
     const created = await createCollection({ name, description: '', privacy: 'private' })
-    if (!created?.id) throw new Error('The collection was not created')
+    if (!created?.id) throw new Error(t('cardModal.collectionNotCreated'))
     localCollections.value = [...localCollections.value, created]
     showNewCollection.value = false
     form.folderId = String(created.id)
     newCollectionName.value = ''
   } catch (e) {
-    error.value = e?.message || 'Could not create the collection'
+    error.value = e?.message || t('cardModal.collectionCreateError')
   } finally {
     creatingCollection.value = false
   }
@@ -288,11 +288,17 @@ const uploading   = ref(false)
 const uploadStage = ref('')
 const uploadError = ref('')
 
+const uploadStageText = computed(() => {
+  if (uploadStage.value === 'Resizing…') return t('cardModal.resizing')
+  if (uploadStage.value === 'Uploading…') return t('cardModal.uploading')
+  return uploadStage.value
+})
+
 async function addImage(file) {
   if (!file || uploading.value) return
   uploadError.value = ''
   if (!IMAGE_TYPES.includes(file.type)) {
-    uploadError.value = 'Only JPEG, PNG or WebP images are supported.'
+    uploadError.value = t('cardModal.imageTypeError')
     return
   }
   // No type chosen yet (e.g. pasted on the type selector): default to Media
@@ -304,10 +310,10 @@ async function addImage(file) {
     const dataUrl = await resizeToJpegDataUrl(file)
     uploadStage.value = 'Uploading…'
     const res = await uploadImage(dataUrl)
-    if (!res?.url) throw new Error('The server did not return an image URL')
+    if (!res?.url) throw new Error(t('cardModal.noImageUrl'))
     form.image = res.url
   } catch (e) {
-    uploadError.value = `Image upload failed: ${e?.message || 'unknown error'}. The image was not added — try another image, or save the card without it.`
+    uploadError.value = t('cardModal.imageUploadError', { error: e?.message || 'unknown error' })
   } finally {
     uploading.value = false
     uploadStage.value = ''
@@ -346,7 +352,7 @@ onMounted(async () => {
 function inferType(card) {
   if (!card) return 'text'
   const tags = parseTags(card.tags)
-  for (const t of CARD_TYPES) { if (tags.includes(`_${t.key}`)) return t.key }
+  for (const tItem of CARD_TYPES.value) { if (tags.includes(`_${tItem.key}`)) return tItem.key }
   for (const [old, neo] of Object.entries(LEGACY_TYPE_MAP)) { if (tags.includes(`_${old}`)) return neo }
   return 'text'
 }
@@ -355,7 +361,7 @@ function parseTags(tags) {
   if (Array.isArray(tags)) return tags.filter(Boolean)
   if (typeof tags === 'string') {
     try { const p = JSON.parse(tags); if (Array.isArray(p)) return p.filter(Boolean) } catch {}
-    return tags.split(',').map(t => t.trim()).filter(Boolean)
+    return tags.split(',').map(tTag => tTag.trim()).filter(Boolean)
   }
   return []
 }
@@ -371,13 +377,13 @@ async function fetchMeta() {
   fetching.value = true; fetchError.value = ''
   try {
     const data = await previewUrl(form.website.trim())
-    if (!data) throw new Error('Could not fetch metadata')
+    if (!data) throw new Error(t('cardModal.fetchMetaError'))
     if (data.title       && !form.title)       form.title       = data.title
     if (data.description && !form.description) form.description = data.description
     if (data.image)                            form.image       = data.image
     // Newer API fields (all optional; an older API just omits them)
     if (!isEdit.value) {
-      if (data.type && data.type !== 'link' && CARD_TYPES.some(t => t.key === data.type)) {
+      if (data.type && data.type !== 'link' && CARD_TYPES.value.some(tItem => tItem.key === data.type)) {
         selectedTypeKey.value = data.type
       }
       if (data.price && !form.price.trim()) form.price = data.price
@@ -394,17 +400,17 @@ async function fetchMeta() {
       if (sid != null && allCollections.value.some(c => String(c.id) === String(sid))) {
         form.folderId = String(sid)
       }
-      const incoming = (Array.isArray(data.tags) ? data.tags : []).filter(t => t && !String(t).startsWith('_'))
+      const incoming = (Array.isArray(data.tags) ? data.tags : []).filter(tTag => tTag && !String(tTag).startsWith('_'))
       if (incoming.length) {
-        const have = form.tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
-        const lower = new Set(have.map(t => t.toLowerCase()))
-        for (const t of incoming) if (!lower.has(String(t).toLowerCase())) { have.push(String(t)); lower.add(String(t).toLowerCase()) }
+        const have = form.tagsRaw.split(',').map(tTag => tTag.trim()).filter(Boolean)
+        const lower = new Set(have.map(tTag => tTag.toLowerCase()))
+        for (const tTag of incoming) if (!lower.has(String(tTag).toLowerCase())) { have.push(String(tTag)); lower.add(String(tTag).toLowerCase()) }
         form.tagsRaw = have.join(', ')
       }
     }
   } catch {
-    fetchError.value = 'Could not fetch metadata.'
-    toastError('Could not fetch URL metadata')
+    fetchError.value = t('cardModal.fetchMetaError')
+    toastError(t('cardModal.fetchMetaToast'))
   } finally { fetching.value = false }
 }
 
@@ -420,7 +426,7 @@ function onUrlPaste(e) {
 async function save() {
   error.value = ''; saving.value = true
   try {
-    const userTags = form.tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
+    const userTags = form.tagsRaw.split(',').map(tTag => tTag.trim()).filter(Boolean)
     const typeTags = selectedTypeKey.value ? [`_${selectedTypeKey.value}`] : []
     const payload = {
       title:       form.title.trim(),
@@ -446,7 +452,7 @@ async function save() {
     emit('saved', result)
   } catch (e) {
     error.value = e.message
-    toastError('Failed to save')
+    toastError(t('cardModal.failedToSave'))
   } finally { saving.value = false }
 }
 </script>

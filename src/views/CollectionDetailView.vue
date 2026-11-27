@@ -3,21 +3,21 @@
     <div class="col-container">
 
       <!-- ── Header ──────────────────────────────────────────── -->
-      <div v-if="loadingCol" class="state-loading"><div class="spinner-page"></div><p>Loading…</p></div>
+      <div v-if="loadingCol" class="state-loading"><div class="spinner-page"></div><p>{{ t('common.loading') }}</p></div>
       <div v-else-if="colError" class="error-page">{{ colError }}</div>
 
       <template v-else-if="collection">
         <header class="col-header">
           <!-- Row 1: back + actions -->
           <div class="col-header-row1">
-            <button class="back-btn" @click="router.push('/')">
+            <button class="back-btn" :aria-label="t('common.back')" @click="router.push('/')">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#007BFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/>
               </svg>
             </button>
             <div class="col-header-edit">
-              <button class="btn btn-ghost btn-sm" @click="openEditCollection">Edit</button>
-              <button v-if="!collection.is_default" class="btn-icon-danger" @click="askDeleteCollection">
+              <button class="btn btn-ghost btn-sm" @click="openEditCollection">{{ t('common.edit') }}</button>
+              <button v-if="!collection.is_default" class="btn-icon-danger" :title="t('common.delete')" :aria-label="t('common.delete')" @click="askDeleteCollection">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="3 6 5 6 21 6"/>
                   <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -32,48 +32,48 @@
             <span :class="['badge', privacyClass(collection.privacy)]">
               <template v-if="collection.privacy === 'public'">
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="5" y1="0.5" x2="5" y2="9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="0.5" y1="5" x2="9.5" y2="5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="1.96" y1="1.96" x2="8.04" y2="8.04" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="8.04" y1="1.96" x2="1.96" y2="8.04" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-                Public
+                {{ t('privacy.public') }}
               </template>
               <template v-else>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                {{ collection.privacy === 'connections' ? 'Connections' : 'Private' }}
+                {{ collection.privacy === 'connections' ? t('privacy.connections') : t('privacy.private') }}
               </template>
             </span>
-            <span class="created-by-pill">Created By {{ store.displayName }}</span>
+            <span class="created-by-pill">{{ t('colDetail.createdBy', { name: store.displayName }) }}</span>
           </div>
 
-          <!-- Title -->
+          <!-- Title (User Content - not translated) -->
           <h1 class="col-title">{{ collection.name }}</h1>
 
           <!-- Meta dates -->
           <div class="col-meta" v-if="collection.created_at || collection.updated_at">
-            <span v-if="collection.created_at">Created: {{ formatDate(collection.created_at) }}</span>
-            <span v-if="collection.updated_at">Last Updated: {{ formatDate(collection.updated_at) }}</span>
+            <span v-if="collection.created_at">{{ t('colDetail.createdDate', { date: formatDate(collection.created_at) }) }}</span>
+            <span v-if="collection.updated_at">{{ t('colDetail.lastUpdated', { date: formatDate(collection.updated_at) }) }}</span>
           </div>
 
           <!-- Search + add -->
           <div class="col-search-row">
-            <input v-model="searchCards" class="cards-search-pill" type="text" placeholder="Search cards…" />
-            <button class="btn-pill-add" @click="openCardModal(null)">+ Add Card</button>
+            <input v-model="searchCards" class="cards-search-pill" type="text" :placeholder="t('colDetail.searchCards')" />
+            <button class="btn-pill-add" @click="openCardModal(null)">{{ t('colDetail.addCard') }}</button>
           </div>
         </header>
 
         <!-- ── Loading / error ─────────────────────────────────── -->
         <div v-if="cardsError" class="error-msg">{{ cardsError }}</div>
         <div v-else-if="loadingCards" class="state-loading" style="padding:40px 0">
-          <div class="spinner-page"></div><p>Loading cards…</p>
+          <div class="spinner-page"></div><p>{{ t('colDetail.loadingCards') }}</p>
         </div>
 
         <!-- ── Empty ──────────────────────────────────────────── -->
         <div v-else-if="filteredCards.length === 0 && searchCards" class="state-empty">
           <div class="state-empty-icon">🔎</div>
-          <p>No cards match your search.</p>
+          <p>{{ t('colDetail.noSearchMatch') }}</p>
         </div>
         <div v-else-if="filteredCards.length === 0" class="empty-cards">
           <div class="empty-icon">🗂️</div>
-          <div class="empty-title">No cards yet</div>
-          <div class="empty-subtitle">Add your first card to this collection</div>
-          <button class="btn-empty" @click="openCardModal(null)">+ Add Card</button>
+          <div class="empty-title">{{ t('colDetail.noCardsTitle') }}</div>
+          <div class="empty-subtitle">{{ t('colDetail.noCardsSubtitle') }}</div>
+          <button class="btn-empty" @click="openCardModal(null)">{{ t('colDetail.addCard') }}</button>
         </div>
 
         <!-- ── Business card grid ──────────────────────────────── -->
@@ -82,11 +82,11 @@
 
             <!-- Inline delete confirm -->
             <div v-if="confirmCardId === card.id" class="inline-confirm">
-              <span>Delete <strong>{{ card.title }}</strong>?</span>
-              <button class="btn btn-ghost btn-sm" @click="confirmCardId = null">Cancel</button>
+              <span>{{ t('colDetail.deleteCardConfirm', { title: card.title }) }}</span>
+              <button class="btn btn-ghost btn-sm" @click="confirmCardId = null">{{ t('common.cancel') }}</button>
               <button class="btn btn-danger-solid btn-sm" :disabled="deletingCardId === card.id" @click="doDeleteCard(card.id)">
                 <span v-if="deletingCardId === card.id" class="spinner"></span>
-                <span v-else>Delete</span>
+                <span v-else>{{ t('common.delete') }}</span>
               </button>
             </div>
 
@@ -107,13 +107,13 @@
               <!-- ② Category: 12px uppercase #8A7A5E -->
               <div class="biz-category">{{ cardCategory(card) }}</div>
 
-              <!-- ③ Title: Montserrat Bold 20px #000000 -->
+              <!-- ③ Title (User Content - not translated) -->
               <div class="biz-title">{{ card.title }}</div>
 
               <!-- Price (optional) -->
               <div v-if="cardPrice(card)" class="biz-price">{{ cardPrice(card) }}</div>
 
-              <!-- ④ Description (optional) -->
+              <!-- ④ Description (optional, User Content - not translated) -->
               <div v-if="card.description" class="biz-desc">{{ card.description }}</div>
 
               <!-- ⑤ Website URL with favicon (optional) -->
@@ -134,9 +134,9 @@
                 <span class="biz-website-text">{{ card.website }}</span>
               </a>
 
-              <!-- ⑥ Tags (optional) -->
+              <!-- ⑥ Tags (optional, User Content - not translated) -->
               <div v-if="visibleTags(card).length" class="biz-tags-row">
-                <span v-for="t in visibleTags(card)" :key="t" class="biz-tag">{{ t }}</span>
+                <span v-for="tTag in visibleTags(card)" :key="tTag" class="biz-tag">{{ tTag }}</span>
               </div>
 
               <!-- Spacer — pushes footer to bottom -->
@@ -144,7 +144,7 @@
 
               <!-- ⑦ Footer: edit | external-link + delete -->
               <div class="biz-footer" @click.stop>
-                <button class="biz-icon-btn" title="Edit" @click="openCardModal(card)">
+                <button class="biz-icon-btn" :title="t('common.edit')" @click="openCardModal(card)">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -157,7 +157,7 @@
                     target="_blank"
                     rel="noopener"
                     class="biz-icon-btn ext"
-                    title="Open link"
+                    :title="t('common.openLink')"
                     @click.stop
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -166,7 +166,7 @@
                       <line x1="10" y1="14" x2="21" y2="3"/>
                     </svg>
                   </a>
-                  <button class="biz-icon-btn danger" title="Delete" @click="confirmCardId = card.id">
+                  <button class="biz-icon-btn danger" :title="t('common.delete')" @click="confirmCardId = card.id">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                       <polyline points="3 6 5 6 21 6"/>
                       <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -207,7 +207,7 @@
     />
     <ConfirmDialog
       v-if="confirmCollection"
-      message="Delete this Sphir?"
+      :message="t('colDetail.deleteSphirConfirm')"
       :sub="collection?.name"
       :loading="deletingCol"
       @confirm="doDeleteCollection"
@@ -227,11 +227,11 @@ import CardModal        from '../components/CardModal.vue'
 import ConfirmDialog    from '../components/ConfirmDialog.vue'
 import CardDetailModal  from '../components/CardDetailModal.vue'
 import { TYPE_EMOJI, typeLabel, parseTags, visibleTags, cardPrice, cardInFolder } from '../cardTypes.js'
+import { t, formatDate } from '../i18n.js'
 
 const route  = useRoute()
 const router = useRouter()
 const { success, error: toastError } = useToast()
-
 
 const collection      = ref(null)
 const allCollections  = ref([])
@@ -271,7 +271,7 @@ function cardCategory(card) {
   if (label) return label
   const firstTag = visibleTags(card)[0]
   if (firstTag) return firstTag.toUpperCase()
-  return card.website ? 'LINK' : 'NOTE'
+  return card.website ? t('cardType.url') : t('cardType.note')
 }
 function cardImage(card) {
   return card.image || card.photo_url || card.og_image || card.thumbnail || null
@@ -281,10 +281,6 @@ function normalizeUrl(url) {
   if (!url) return '#'
   return url.startsWith('http') ? url : `https://${url}`
 }
-function formatDate(str) {
-  if (!str) return '—'
-  return new Date(str).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
 
 onMounted(async () => {
   const id = route.params.id
@@ -292,7 +288,7 @@ onMounted(async () => {
     const cols = await fetchCollections()
     allCollections.value = cols ?? []
     collection.value = cols?.find(c => String(c.id) === String(id)) ?? null
-    if (!collection.value) { colError.value = 'Sphir not found.'; return }
+    if (!collection.value) { colError.value = t('colDetail.notFound'); return }
   } catch (e) { colError.value = e.message; return }
   finally { loadingCol.value = false }
   await loadCards()
@@ -308,7 +304,11 @@ async function loadCards() {
 }
 
 function openEditCollection() { collectionModalOpen.value = true }
-function onCollectionSaved(result) { collection.value = { ...collection.value, ...result }; collectionModalOpen.value = false; success('Changes saved') }
+function onCollectionSaved(result) {
+  collection.value = { ...collection.value, ...result }
+  collectionModalOpen.value = false
+  success(t('colDetail.changesSaved'))
+}
 function askDeleteCollection() { confirmCollection.value = true }
 async function doDeleteCollection() {
   deletingCol.value = true
@@ -337,10 +337,10 @@ function onCardSaved(result) {
     if (!cardInFolder(result, route.params.id)) {
       cards.value = cards.value.filter(c => String(c.id) !== String(result.id))
     }
-    success('Changes saved')
+    success(t('colDetail.changesSaved'))
   } else {
     cards.value.unshift(result)
-    success('Card saved')
+    success(t('colDetail.cardSaved'))
   }
   cardModalOpen.value = false
 }
@@ -350,9 +350,9 @@ async function doDeleteCard(id) {
     await deleteCard(id)
     cards.value = cards.value.filter(c => String(c.id) !== String(id))
     confirmCardId.value = null
-    success('Card deleted')
+    success(t('colDetail.cardDeleted'))
   } catch (e) {
-    toastError('Failed to delete card')
+    toastError(t('colDetail.failedDeleteCard'))
     confirmCardId.value = null
   }
   finally { deletingCardId.value = null }

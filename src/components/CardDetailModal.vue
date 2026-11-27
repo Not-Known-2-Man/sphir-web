@@ -4,7 +4,7 @@
       <div class="detail-modal">
 
         <!-- Close -->
-        <button class="detail-close" @click="$emit('close')">×</button>
+        <button class="detail-close" :aria-label="t('common.close')" @click="$emit('close')">×</button>
 
         <!-- Image -->
         <div class="detail-image-wrap">
@@ -23,13 +23,13 @@
           <!-- Category -->
           <div v-if="category" class="detail-category">{{ category }}</div>
 
-          <!-- Title -->
+          <!-- Title (User Content - not translated) -->
           <h2 class="detail-title">{{ card.title }}</h2>
 
           <!-- Price -->
           <div v-if="price" class="detail-price">{{ price }}</div>
 
-          <!-- Description -->
+          <!-- Description (User Content - not translated) -->
           <p v-if="card.description" class="detail-desc">{{ card.description }}</p>
 
           <!-- Website link -->
@@ -48,19 +48,19 @@
             <span>{{ card.website }}</span>
           </a>
 
-          <!-- Tags -->
+          <!-- Tags (User Content - not translated) -->
           <div v-if="tags.length" class="detail-tags">
-            <span v-for="t in tags" :key="t" class="detail-tag">{{ t }}</span>
+            <span v-for="tTag in tags" :key="tTag" class="detail-tag">{{ tTag }}</span>
           </div>
 
           <!-- Meta: collection + date -->
           <div class="detail-meta">
             <div v-if="collectionName" class="detail-meta-row">
-              <span class="detail-meta-label">{{ folderIds.length > 1 ? 'Collections' : 'Collection' }}</span>
+              <span class="detail-meta-label">{{ folderIds.length > 1 ? t('cardDetail.collections') : t('cardDetail.collection') }}</span>
               <span class="detail-meta-value">{{ collectionName }}</span>
             </div>
             <div v-if="card.created_at" class="detail-meta-row">
-              <span class="detail-meta-label">Saved on</span>
+              <span class="detail-meta-label">{{ t('cardDetail.savedOn') }}</span>
               <span class="detail-meta-value">{{ formatDate(card.created_at) }}</span>
             </div>
           </div>
@@ -70,27 +70,27 @@
           <!-- Add to collections -->
           <div v-if="collections.length" class="detail-cols">
             <button class="det-btn det-btn-edit" @click="toggleCols">
-              {{ colsOpen ? 'Close' : 'Add to collections' }}
+              {{ colsOpen ? t('cardDetail.closeCollections') : t('cardDetail.addToCollections') }}
             </button>
             <div v-if="colsOpen" class="cols-panel">
               <label v-for="c in collections" :key="c.id" class="cols-row">
                 <input type="checkbox" :value="String(c.id)" v-model="selected" />
                 <span class="cols-name">{{ c.name }}</span>
-                <span v-if="String(c.id) === primaryId" class="cols-primary">Primary</span>
+                <span v-if="String(c.id) === primaryId" class="cols-primary">{{ t('cardDetail.primary') }}</span>
               </label>
               <div v-if="colsError" class="cols-error">{{ colsError }}</div>
               <button class="det-btn det-btn-url cols-save" :disabled="!selected.length || savingCols || !colsChanged" @click="saveCols">
-                {{ savingCols ? 'Saving…' : 'Save collections' }}
+                {{ savingCols ? t('cardDetail.savingCollections') : t('cardDetail.saveCollections') }}
               </button>
             </div>
           </div>
 
           <!-- Delete confirm -->
           <div v-if="confirmingDelete" class="detail-confirm">
-            <p class="detail-confirm-msg">Delete <strong>{{ card.title }}</strong>?</p>
+            <p class="detail-confirm-msg">{{ t('cardDetail.deleteConfirm', { title: card.title }) }}</p>
             <div class="detail-confirm-btns">
-              <button class="btn btn-ghost btn-sm" @click="confirmingDelete = false">Cancel</button>
-              <button class="btn btn-danger-solid btn-sm" @click="$emit('delete', card.id)">Delete</button>
+              <button class="btn btn-ghost btn-sm" @click="confirmingDelete = false">{{ t('common.cancel') }}</button>
+              <button class="btn btn-danger-solid btn-sm" @click="$emit('delete', card.id)">{{ t('common.delete') }}</button>
             </div>
           </div>
 
@@ -101,7 +101,7 @@
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
-              Edit
+              {{ t('common.edit') }}
             </button>
             <button class="det-btn det-btn-delete" @click="confirmingDelete = true">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -109,7 +109,7 @@
                 <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
                 <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
               </svg>
-              Delete
+              {{ t('common.delete') }}
             </button>
             <a
               v-if="card.website"
@@ -123,7 +123,7 @@
                 <polyline points="15 3 21 3 21 9"/>
                 <line x1="10" y1="14" x2="21" y2="3"/>
               </svg>
-              Open URL
+              {{ t('common.openUrl') }}
             </a>
           </div>
 
@@ -137,6 +137,7 @@
 import { ref, computed } from 'vue'
 import { setCardFolders } from '../api.js'
 import { typeLabel, parseTags, cardPrice, cardFolderIds } from '../cardTypes.js'
+import { t, formatDate } from '../i18n.js'
 
 const props = defineProps({
   card:        { type: Object, required: true },
@@ -176,18 +177,18 @@ async function saveCols() {
     emit('updated', { ...props.card, ...(updated ?? { folder_id: nextIds.value[0], folder_ids: nextIds.value }) })
     colsOpen.value = false
   } catch (e) {
-    colsError.value = e.message || 'Could not update collections'
+    colsError.value = e.message || t('cardDetail.colsError')
   } finally { savingCols.value = false }
 }
 
-const tags = computed(() => parseTags(props.card.tags).filter(t => !t.startsWith('_')))
+const tags = computed(() => parseTags(props.card.tags).filter(tTag => !tTag.startsWith('_')))
 
 const category = computed(() => {
   const label = typeLabel(props.card)
   if (label) return label
   const first = tags.value[0]
   if (first) return first.toUpperCase()
-  return props.card.website ? 'LINK' : 'NOTE'
+  return props.card.website ? t('cardType.url') : t('cardType.note')
 })
 
 const img = computed(() =>
@@ -204,11 +205,6 @@ const collectionName = computed(() => {
 function normalizeUrl(url) {
   if (!url) return '#'
   return url.startsWith('http') ? url : `https://${url}`
-}
-
-function formatDate(str) {
-  if (!str) return ''
-  return new Date(str).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 </script>
 

@@ -1,52 +1,73 @@
 <template>
   <div class="auth-page">
     <div class="auth-card">
-      <!-- Logo -->
-      <div class="auth-logo">
-        <svg width="28" height="28" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <path d="M10 1.5C5.36 1.5 1.5 5.36 1.5 10S5.36 18.5 10 18.5 18.5 14.64 18.5 10C18.5 7.62 17.55 5.47 16 3.92" stroke="#8A7A5E" stroke-width="1.6" stroke-linecap="round"/>
-          <path d="M10 4.5C7.01 4.5 4.5 7.01 4.5 10S7.01 15.5 10 15.5" stroke="#8A7A5E" stroke-width="1.4" stroke-linecap="round"/>
-          <path d="M10 7.5C8.62 7.5 7.5 8.62 7.5 10S8.62 12.5 10 12.5C11.38 12.5 12.5 11.38 12.5 10" stroke="#8A7A5E" stroke-width="1.2" stroke-linecap="round"/>
-        </svg>
-        <span class="auth-wordmark">SPHIR</span>
+      <div class="auth-header">
+        <!-- Logo -->
+        <div class="auth-logo">
+          <svg width="28" height="28" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M10 1.5C5.36 1.5 1.5 5.36 1.5 10S5.36 18.5 10 18.5 18.5 14.64 18.5 10C18.5 7.62 17.55 5.47 16 3.92" stroke="#8A7A5E" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M10 4.5C7.01 4.5 4.5 7.01 4.5 10S7.01 15.5 10 15.5" stroke="#8A7A5E" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M10 7.5C8.62 7.5 7.5 8.62 7.5 10S8.62 12.5 10 12.5C11.38 12.5 12.5 11.38 12.5 10" stroke="#8A7A5E" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <span class="auth-wordmark">SPHIR</span>
+        </div>
+
+        <!-- Language switcher -->
+        <div class="lang-switch" role="group" :aria-label="t('lang.selector')">
+          <button
+            type="button"
+            class="lang-btn"
+            :class="{ active: locale === 'en' }"
+            :aria-pressed="locale === 'en'"
+            @click="setLocale('en')"
+          >{{ t('lang.en') }}</button>
+          <span class="lang-divider">/</span>
+          <button
+            type="button"
+            class="lang-btn"
+            :class="{ active: locale === 'es' }"
+            :aria-pressed="locale === 'es'"
+            @click="setLocale('es')"
+          >{{ t('lang.es') }}</button>
+        </div>
       </div>
 
       <!-- Tabs -->
       <div class="auth-tabs">
-        <button class="auth-tab" :class="{ active: mode === 'signin' }" @click="switchMode('signin')">Sign In</button>
-        <button class="auth-tab" :class="{ active: mode === 'signup' }" @click="switchMode('signup')">Sign Up</button>
+        <button class="auth-tab" :class="{ active: mode === 'signin' }" @click="switchMode('signin')">{{ t('auth.signInTab') }}</button>
+        <button class="auth-tab" :class="{ active: mode === 'signup' }" @click="switchMode('signup')">{{ t('auth.signUpTab') }}</button>
       </div>
 
       <!-- Sign In -->
       <form v-if="mode === 'signin'" @submit.prevent="doSignIn" class="auth-form">
         <div class="auth-field">
-          <input v-model="siEmail" type="email" placeholder="Email address" autocomplete="email" autofocus required />
+          <input v-model="siEmail" type="email" :placeholder="t('auth.emailPlaceholder')" autocomplete="email" autofocus required />
         </div>
         <div class="auth-field">
-          <input v-model="siPassword" type="password" placeholder="Password" autocomplete="current-password" required />
+          <input v-model="siPassword" type="password" :placeholder="t('auth.passwordPlaceholder')" autocomplete="current-password" required />
         </div>
         <div v-if="error" class="error-msg">{{ error }}</div>
         <button type="submit" class="btn-auth-submit" :disabled="loading">
           <span v-if="loading" class="spinner spinner-dark"></span>
-          <span v-else>Sign In</span>
+          <span v-else>{{ t('auth.signInBtn') }}</span>
         </button>
       </form>
 
       <!-- Sign Up -->
       <form v-else @submit.prevent="doSignUp" class="auth-form">
         <div class="auth-field">
-          <input v-model="suEmail" type="email" placeholder="Email address" autocomplete="email" required />
+          <input v-model="suEmail" type="email" :placeholder="t('auth.emailPlaceholder')" autocomplete="email" required />
         </div>
         <div class="auth-field">
-          <input v-model="suPassword" type="password" placeholder="Password (min 6 chars)" required />
+          <input v-model="suPassword" type="password" :placeholder="t('auth.passwordMinPlaceholder')" required />
         </div>
         <div class="auth-field">
-          <input v-model="suConfirm" type="password" placeholder="Confirm password" required />
+          <input v-model="suConfirm" type="password" :placeholder="t('auth.confirmPlaceholder')" required />
         </div>
         <div v-if="error" class="error-msg">{{ error }}</div>
         <button type="submit" class="btn-auth-submit" :disabled="loading">
           <span v-if="loading" class="spinner spinner-dark"></span>
-          <span v-else>Create Account</span>
+          <span v-else>{{ t('auth.signUpBtn') }}</span>
         </button>
       </form>
 
@@ -54,7 +75,7 @@
       <div class="guest-row">
         <button class="guest-link" :disabled="loadingGuest" @click="doGuest">
           <span v-if="loadingGuest" class="spinner spinner-muted" style="width:12px;height:12px"></span>
-          <span v-else>Continue as Guest</span>
+          <span v-else>{{ t('auth.guestBtn') }}</span>
         </button>
       </div>
     </div>
@@ -66,6 +87,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { signIn, signUp, guestLogin } from '../api.js'
 import { store } from '../store.js'
+import { t, locale, setLocale } from '../i18n.js'
 
 const router = useRouter()
 
@@ -92,8 +114,8 @@ async function doSignIn() {
 }
 
 async function doSignUp() {
-  if (suPassword.value !== suConfirm.value) { error.value = 'Passwords do not match.'; return }
-  if (suPassword.value.length < 6) { error.value = 'Password must be at least 6 characters.'; return }
+  if (suPassword.value !== suConfirm.value) { error.value = t('auth.passwordMismatch'); return }
+  if (suPassword.value.length < 6) { error.value = t('auth.passwordMin'); return }
   error.value = ''; loading.value = true
   try {
     await signUp(suEmail.value.trim(), suPassword.value)
@@ -130,10 +152,13 @@ async function doGuest() {
   padding: 36px 32px 28px;
 }
 
-/* Logo */
+/* Header & Logo */
+.auth-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 32px;
+}
 .auth-logo {
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  margin-bottom: 36px;
+  display: flex; align-items: center; gap: 10px;
 }
 .auth-wordmark {
   font-family: 'Poppins', sans-serif;

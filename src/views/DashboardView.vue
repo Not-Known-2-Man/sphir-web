@@ -3,18 +3,18 @@
   <div class="page-body">
     <!-- Page hero -->
     <div class="page-hero">
-      <h1 class="page-title">Sphirs</h1>
+      <h1 class="page-title">{{ t('dashboard.title') }}</h1>
       <div class="toolbar">
         <div class="toolbar-left">
           <div class="search-wrap">
-            <input v-model="search" class="search-input" type="text" placeholder="Search Sphirs" />
-            <button v-if="search" class="search-clear" @click="search = ''" aria-label="Clear">×</button>
+            <input v-model="search" class="search-input" type="text" :placeholder="t('dashboard.searchPlaceholder')" />
+            <button v-if="search" class="search-clear" @click="search = ''" :aria-label="t('common.clear')">×</button>
             <img v-else class="search-icon" src="/assets/search.svg" alt="" width="20" height="20" />
           </div>
           <div class="toolbar-filters">
             <div v-for="f in FILTERS" :key="f.key" class="toolbar-dropdown">
               <button class="toolbar-dropdown-btn" @click.stop="openFilter = openFilter === f.key ? null : f.key">
-                {{ f.options.find(o => o.value === filters[f.key]).label }}
+                {{ (f.options.find(o => o.value === filters[f.key]) || f.options[0]).label }}
                 <img src="/assets/dropdown-arrow.svg" alt="" width="20" height="20" />
               </button>
               <div v-if="openFilter === f.key" class="toolbar-dropdown-menu" @click.stop>
@@ -27,16 +27,16 @@
         <div class="toolbar-right">
           <button class="create-btn" @click="openCollectionModal(null)">
             <img src="/assets/plus.svg" alt="" width="20" height="20" />
-            Create a Sphir
+            {{ t('dashboard.createSphir') }}
           </button>
-          <a href="#" class="what-link" @click.prevent>What is a Sphir?</a>
+          <a href="#" class="what-link" @click.prevent>{{ t('dashboard.whatIsSphir') }}</a>
         </div>
       </div>
     </div>
 
     <!-- Loading / error -->
     <div v-if="loadingCollections" class="state-loading">
-      <div class="spinner-page"></div><p>Loading…</p>
+      <div class="spinner-page"></div><p>{{ t('common.loading') }}</p>
     </div>
     <div v-else-if="colError" class="error-msg">{{ colError }}</div>
 
@@ -48,13 +48,13 @@
         <!-- No results at all -->
         <div v-if="!activeList.length && !searchedCards.length" class="state-empty">
           <div class="state-empty-icon">🔎</div>
-          <p class="search-noresults">No results for "{{ search }}"</p>
+          <p class="search-noresults">{{ t('dashboard.noResults', { query: search }) }}</p>
         </div>
 
         <template v-else>
           <!-- Collections section -->
           <div v-if="activeList.length" class="search-section">
-            <div class="search-section-label">Collections</div>
+            <div class="search-section-label">{{ t('dashboard.collectionsSection') }}</div>
             <div class="sphir-grid" @click="closeMenu">
               <div v-for="col in activeList" :key="col.id" class="sphir-card">
                 <div class="sphir-card-top">
@@ -66,7 +66,7 @@
                         <line x1="4.1" y1="4.1" x2="15.9" y2="15.9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
                         <line x1="15.9" y1="4.1" x2="4.1" y2="15.9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
                       </svg>
-                      <span>Public</span>
+                      <span>{{ t('privacy.public') }}</span>
                     </template>
                     <template v-else>
                       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -75,14 +75,14 @@
                         <circle cx="15" cy="5.5" r="2.2" stroke="currentColor" stroke-width="1.3"/>
                         <path d="M14.5 17c0-2.07 1.07-3.9 2.7-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
                       </svg>
-                      <span>{{ col.privacy === 'connections' ? 'Connections' : 'Private' }}</span>
+                      <span>{{ col.privacy === 'connections' ? t('privacy.connections') : t('privacy.private') }}</span>
                     </template>
                   </span>
                   <div class="menu-wrap">
                     <button class="dots-btn" @click.stop="toggleMenu(col.id)">···</button>
                     <div v-if="openMenuId === col.id" class="card-menu">
-                      <button @click.stop="openCollectionModal(col); openMenuId = null">Edit</button>
-                      <button v-if="!col.is_default" class="menu-danger" @click.stop="askDeleteCollection(col); openMenuId = null">Delete</button>
+                      <button @click.stop="openCollectionModal(col); openMenuId = null">{{ t('common.edit') }}</button>
+                      <button v-if="!col.is_default" class="menu-danger" @click.stop="askDeleteCollection(col); openMenuId = null">{{ t('common.delete') }}</button>
                     </div>
                   </div>
                 </div>
@@ -91,13 +91,13 @@
                   <div class="sphir-name">{{ col.name }}</div>
                   <div v-if="col.description" class="sphir-desc">{{ col.description }}</div>
                   <div class="sphir-share-row" @click.prevent.stop>
-                    <button class="share-btn" title="Share" @click.prevent.stop>
+                    <button class="share-btn" :title="t('common.share')" @click.prevent.stop>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
                         <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
                         <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                       </svg>
-                      <span>Share</span>
+                      <span>{{ t('common.share') }}</span>
                     </button>
                   </div>
                 </router-link>
@@ -107,7 +107,7 @@
 
           <!-- Cards section -->
           <div v-if="searchedCards.length" class="search-section">
-            <div class="search-section-label">Cards</div>
+            <div class="search-section-label">{{ t('dashboard.cardsSection') }}</div>
             <div class="uncat-list">
               <div v-for="card in searchedCards" :key="card.id" class="uncat-row" @click="detailCard = card">
                 <div class="uncat-row-body">
@@ -137,7 +137,7 @@
                     <line x1="4.1" y1="4.1" x2="15.9" y2="15.9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
                     <line x1="15.9" y1="4.1" x2="4.1" y2="15.9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
                   </svg>
-                  <span>Public</span>
+                  <span>{{ t('privacy.public') }}</span>
                 </template>
                 <template v-else>
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -146,14 +146,14 @@
                     <circle cx="15" cy="5.5" r="2.2" stroke="currentColor" stroke-width="1.3"/>
                     <path d="M14.5 17c0-2.07 1.07-3.9 2.7-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
                   </svg>
-                  <span>{{ col.privacy === 'connections' ? 'Connections' : 'Private' }}</span>
+                  <span>{{ col.privacy === 'connections' ? t('privacy.connections') : t('privacy.private') }}</span>
                 </template>
               </span>
               <div class="menu-wrap">
                 <button class="dots-btn" @click.stop="toggleMenu(col.id)">···</button>
                 <div v-if="openMenuId === col.id" class="card-menu">
-                  <button @click.stop="openCollectionModal(col); openMenuId = null">Edit</button>
-                  <button v-if="!col.is_default" class="menu-danger" @click.stop="askDeleteCollection(col); openMenuId = null">Delete</button>
+                  <button @click.stop="openCollectionModal(col); openMenuId = null">{{ t('common.edit') }}</button>
+                  <button v-if="!col.is_default" class="menu-danger" @click.stop="askDeleteCollection(col); openMenuId = null">{{ t('common.delete') }}</button>
                 </div>
               </div>
             </div>
@@ -162,13 +162,13 @@
               <div class="sphir-name">{{ col.name }}</div>
               <div v-if="col.description" class="sphir-desc">{{ col.description }}</div>
               <div class="sphir-share-row" @click.prevent.stop>
-                <button class="share-btn" title="Share" @click.prevent.stop>
+                <button class="share-btn" :title="t('common.share')" @click.prevent.stop>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
                     <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
                     <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                   </svg>
-                  <span>Share</span>
+                  <span>{{ t('common.share') }}</span>
                 </button>
               </div>
             </router-link>
@@ -203,7 +203,7 @@
     />
     <ConfirmDialog
       v-if="confirmTarget"
-      message="Delete this Sphir?"
+      :message="t('dashboard.deleteSphirConfirm')"
       :sub="confirmTarget.name"
       :loading="deleting"
       @confirm="doDelete"
@@ -223,17 +223,19 @@ import CardModal        from '../components/CardModal.vue'
 import ConfirmDialog    from '../components/ConfirmDialog.vue'
 import CardDetailModal  from '../components/CardDetailModal.vue'
 import { typeLabel, parseTags, visibleTags, cardPrice } from '../cardTypes.js'
+import { t, formatDate } from '../i18n.js'
 
 const { success, error: toastError } = useToast()
 
-const FILTERS = [
+const FILTERS = computed(() => [
   { key: 'privacy', options: [
-    { value: 'all', label: 'All Sphirs' }, { value: 'public', label: 'Public' }, { value: 'private', label: 'Private' }
+    { value: 'all', label: t('dashboard.filterAllSphirs') }, { value: 'public', label: t('dashboard.filterPublic') }, { value: 'private', label: t('dashboard.filterPrivate') }
   ] },
   { key: 'owner', options: [
-    { value: 'all', label: 'All' }, { value: 'mine', label: 'Created by Me' }, { value: 'joined', label: 'Joined by Me' }
+    { value: 'all', label: t('dashboard.filterAll') }, { value: 'mine', label: t('dashboard.filterMine') }, { value: 'joined', label: t('dashboard.filterJoined') }
   ] }
-]
+])
+
 const filters         = reactive({ privacy: 'all', owner: 'all' })
 const openFilter      = ref(null)
 const search          = ref('')
@@ -276,7 +278,7 @@ const searchedCards = computed(() => {
     c.title?.toLowerCase().includes(q) ||
     c.description?.toLowerCase().includes(q) ||
     c.website?.toLowerCase().includes(q) ||
-    parseTags(c.tags).some(t => t.toLowerCase().includes(q))
+    parseTags(c.tags).some(tTag => tTag.toLowerCase().includes(q))
   )
 })
 
@@ -310,11 +312,7 @@ function cardCategory(card) {
   if (label) return label
   const first = visibleTags(card)[0]
   if (first) return first.toUpperCase()
-  return card.website ? 'LINK' : 'NOTE'
-}
-function formatDate(str) {
-  if (!str) return ''
-  return new Date(str).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return card.website ? t('cardType.url') : t('cardType.note')
 }
 
 function onDetailUpdated(card) {
@@ -327,8 +325,8 @@ async function onDetailDelete(id) {
   try {
     await deleteCard(id)
     allCards.value = allCards.value.filter(c => String(c.id) !== String(id))
-    success('Card deleted')
-  } catch { toastError('Failed to delete card') }
+    success(t('dashboard.cardDeleted'))
+  } catch { toastError(t('dashboard.failedDeleteCard')) }
   detailCard.value = null
 }
 
@@ -345,11 +343,11 @@ function onCollectionSaved(result) {
   if (editingCollection.value) {
     const idx = collections.value.findIndex(c => String(c.id) === String(editingCollection.value.id))
     if (idx !== -1) collections.value[idx] = { ...collections.value[idx], ...result }
-    success('Changes saved')
+    success(t('dashboard.changesSaved'))
   } else {
     if (result) collections.value.unshift(result)
     else loadCollections()
-    success('Collection created')
+    success(t('dashboard.collectionCreated'))
   }
   collectionModalOpen.value = false
 }
@@ -369,7 +367,7 @@ function onCardSaved(result) {
   if (result?.folder_id && !collections.value.some(c => String(c.id) === String(result.folder_id))) {
     loadCollections()
   }
-  success(editingCard.value ? 'Changes saved' : 'Card saved')
+  success(editingCard.value ? t('dashboard.changesSaved') : t('dashboard.cardSaved'))
   cardModalOpen.value = false
 }
 
@@ -380,8 +378,8 @@ async function doDelete() {
     await deleteCollection(target.id)
     collections.value = collections.value.filter(c => String(c.id) !== String(target.id))
     confirmTarget.value = null
-    success('Collection deleted')
-  } catch (e) { toastError(e?.message || 'Failed to delete'); confirmTarget.value = null }
+    success(t('dashboard.collectionDeleted'))
+  } catch (e) { toastError(e?.message || t('dashboard.failedDelete')); confirmTarget.value = null }
   finally { deleting.value = false }
 }
 </script>
