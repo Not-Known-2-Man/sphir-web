@@ -128,7 +128,7 @@ export default {
   'cardModal.alreadyOnSphirMany': 'Ya está en Sphir · {count} personas la guardaron',
   'cardModal.filledByAi': 'Completado por IA · edita lo que quieras',
   'card.private': 'Privada',
-  'cardModal.privateLabel': 'Card privada',
+  'cardModal.privateLabel': 'Tarjeta privada',
   'cardModal.privateHint': 'Solo tú la ves. Desbloquéala para compartirla en una colección pública.',
   'cardModal.imageLabel': 'Imagen',
   'cardModal.imageHint': '(elige un archivo o pega con Cmd/Ctrl+V)',
