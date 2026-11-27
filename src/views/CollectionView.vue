@@ -95,6 +95,7 @@
             <template v-else>
               <div class="card-body">
                 <div class="card-main">
+                  <CardLockBadge :card="card" />
                   <div class="card-title">{{ card.title }}</div>
                   <div class="card-desc" v-if="card.description">{{ card.description }}</div>
                   <a
@@ -149,6 +150,14 @@
           <input v-model="cardForm.tagsRaw" type="text" :placeholder="t('colView.tagsPlaceholder')" />
         </div>
 
+        <div class="modal-field">
+          <label class="private-row">
+            <input v-model="cardForm.isPrivate" type="checkbox" />
+            <span>{{ t('cardModal.privateLabel') }}</span>
+          </label>
+          <span class="field-hint">{{ t('cardModal.privateHint') }}</span>
+        </div>
+
         <div v-if="cardFormError" class="modal-error">{{ cardFormError }}</div>
 
         <div class="modal-actions">
@@ -173,6 +182,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { fetchCollections, fetchAllCards, createCard, updateCard, deleteCard } from '../api.js'
 import { store } from '../store.js'
 import { t, locale, setLocale } from '../i18n.js'
+import CardLockBadge from '../components/CardLockBadge.vue'
+import { isCardPrivate, privatePayload } from '../cardPrivacy.js'
 
 const route  = useRoute()
 const router = useRouter()
@@ -191,7 +202,7 @@ const cardFormError   = ref('')
 const confirmDeleteId = ref(null)
 const deletingId      = ref(null)
 
-const cardForm = reactive({ title: '', description: '', website: '', tagsRaw: '' })
+const cardForm = reactive({ title: '', description: '', website: '', tagsRaw: '', isPrivate: true })
 
 function parseTags(tags) {
   if (Array.isArray(tags)) return tags.filter(Boolean)
@@ -242,7 +253,7 @@ async function loadCards() {
 
 function openCreate() {
   editingCard.value = null
-  cardForm.title = ''; cardForm.description = ''; cardForm.website = ''; cardForm.tagsRaw = ''
+  cardForm.title = ''; cardForm.description = ''; cardForm.website = ''; cardForm.tagsRaw = ''; cardForm.isPrivate = true
   cardFormError.value = ''
   showCardModal.value = true
 }
@@ -253,6 +264,7 @@ function openEdit(card) {
   cardForm.description = card.description ?? ''
   cardForm.website     = card.website     ?? ''
   cardForm.tagsRaw     = parseTags(card.tags).join(', ')
+  cardForm.isPrivate   = isCardPrivate(card)
   cardFormError.value  = ''
   showCardModal.value  = true
 }
@@ -269,7 +281,8 @@ async function doSaveCard() {
         title: cardForm.title.trim(),
         description: cardForm.description.trim(),
         website: cardForm.website.trim(),
-        tags
+        tags,
+        ...privatePayload(cardForm.isPrivate)
       })
       // Patch the card in place so the list updates without a full reload.
       const idx = cards.value.findIndex(c => c.id === editingCard.value.id)
@@ -279,7 +292,8 @@ async function doSaveCard() {
           title: cardForm.title.trim(),
           description: cardForm.description.trim(),
           website: cardForm.website.trim(),
-          tags
+          tags,
+          ...privatePayload(cardForm.isPrivate)
         }
       }
     } else {
@@ -288,7 +302,8 @@ async function doSaveCard() {
         description: cardForm.description.trim(),
         website: cardForm.website.trim(),
         tags,
-        folder_id: route.params.id
+        folder_id: route.params.id,
+        ...privatePayload(cardForm.isPrivate)
       })
       cards.value.unshift(newCard ?? {
         id: Date.now(),
@@ -296,7 +311,8 @@ async function doSaveCard() {
         description: cardForm.description.trim(),
         website: cardForm.website.trim(),
         tags,
-        folder_id: route.params.id
+        folder_id: route.params.id,
+        ...privatePayload(cardForm.isPrivate)
       })
     }
     closeCardModal()
@@ -549,6 +565,8 @@ h1 { font-size: 26px; font-weight: 700; }
   padding: 2px 9px;
 }
 
+.private-row { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.private-row input { width: auto; margin: 0; }
 .field-hint { font-size: 11px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-muted); }
 
 .spinner-sm {

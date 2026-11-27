@@ -112,6 +112,7 @@
               <div v-for="card in searchedCards" :key="card.id" class="uncat-row" @click="detailCard = card">
                 <div class="uncat-row-body">
                   <span class="uncat-category">{{ cardCategory(card) }}</span>
+                  <CardLockBadge :card="card" />
                   <span class="uncat-title">{{ card.title }}</span>
                   <span v-if="cardPrice(card)" class="uncat-price">{{ cardPrice(card) }}</span>
                   <span v-if="card.description" class="uncat-desc">{{ card.description }}</span>
@@ -222,6 +223,7 @@ import CollectionModal  from '../components/CollectionModal.vue'
 import CardModal        from '../components/CardModal.vue'
 import ConfirmDialog    from '../components/ConfirmDialog.vue'
 import CardDetailModal  from '../components/CardDetailModal.vue'
+import CardLockBadge    from '../components/CardLockBadge.vue'
 import { typeLabel, parseTags, visibleTags, cardPrice } from '../cardTypes.js'
 import { t, formatDate } from '../i18n.js'
 

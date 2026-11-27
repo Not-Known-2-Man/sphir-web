@@ -121,6 +121,14 @@
               </div>
             </div>
 
+            <div class="field">
+              <label class="private-row">
+                <input v-model="form.isPrivate" type="checkbox" />
+                <span>{{ t('cardModal.privateLabel') }}</span>
+              </label>
+              <span class="field-hint">{{ t('cardModal.privateHint') }}</span>
+            </div>
+
             <div v-if="error" class="error-msg">{{ error }}</div>
 
             <div class="modal-actions">
@@ -146,6 +154,7 @@ import { createCard, updateCard, fetchCollections, createCollection, previewUrl,
 import { resizeToJpegDataUrl, IMAGE_TYPES } from '../utils/imageResize.js'
 import { useToast } from '../composables/useToast.js'
 import { t } from '../i18n.js'
+import { isCardPrivate, privatePayload } from '../cardPrivacy.js'
 
 const CARD_TYPES = computed(() => [
   {
@@ -249,6 +258,7 @@ const form = reactive({
   price:       props.card?.price       ?? '',
   tagsRaw:     parseTags(props.card?.tags ?? []).filter(tTag => !tTag.startsWith('_')).join(', '),
   folderId:    String(props.card?.folder_id ?? props.defaultFolderId ?? ''),
+  isPrivate:   isCardPrivate(props.card),
 })
 
 const saving           = ref(false)
@@ -437,6 +447,7 @@ async function save() {
       og_image:    form.image || '',
       price:       form.price.trim(),
       folder_id:   form.folderId || undefined,
+      ...privatePayload(form.isPrivate),
     }
     let result
     if (isEdit.value) {
@@ -533,6 +544,9 @@ async function save() {
 .new-collection-btn { align-self: flex-start; margin-top: 6px; }
 .new-collection-row input { flex: 1; min-width: 0; }
 .field-hint-err { display: block; font-size: 12px; color: var(--danger); margin-top: 5px; }
+
+.private-row { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.private-row input { width: auto; margin: 0; }
 
 .sphir-notice, .ai-hint { font-size: 13px; margin-bottom: 12px; }
 .sphir-notice {
