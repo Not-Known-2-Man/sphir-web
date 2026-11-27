@@ -22,6 +22,7 @@
 
           <!-- Category -->
           <div v-if="category" class="detail-category">{{ category }}</div>
+          <CardLockBadge :card="card" />
 
           <!-- Title (User Content - not translated) -->
           <h2 class="detail-title">{{ card.title }}</h2>
@@ -137,6 +138,7 @@
 import { ref, computed } from 'vue'
 import { setCardFolders } from '../api.js'
 import { typeLabel, parseTags, cardPrice, cardFolderIds } from '../cardTypes.js'
+import CardLockBadge from './CardLockBadge.vue'
 import { t, formatDate } from '../i18n.js'
 
 const props = defineProps({

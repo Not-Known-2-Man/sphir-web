@@ -106,6 +106,7 @@
 
               <!-- ② Category: 12px uppercase #8A7A5E -->
               <div class="biz-category">{{ cardCategory(card) }}</div>
+              <CardLockBadge :card="card" class="biz-lock" />
 
               <!-- ③ Title (User Content - not translated) -->
               <div class="biz-title">{{ card.title }}</div>
@@ -226,6 +227,7 @@ import CollectionModal  from '../components/CollectionModal.vue'
 import CardModal        from '../components/CardModal.vue'
 import ConfirmDialog    from '../components/ConfirmDialog.vue'
 import CardDetailModal  from '../components/CardDetailModal.vue'
+import CardLockBadge    from '../components/CardLockBadge.vue'
 import { TYPE_EMOJI, typeLabel, parseTags, visibleTags, cardPrice, cardInFolder } from '../cardTypes.js'
 import { t, formatDate } from '../i18n.js'
 
@@ -474,6 +476,7 @@ async function doDeleteCard(id) {
   margin: 0 20px; padding-top: 16px;
   flex-shrink: 0;
 }
+.biz-lock { margin: 8px 20px 0; }
 
 /* ③ Title */
 .biz-title {
